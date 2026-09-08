@@ -1,53 +1,53 @@
 # Lyra
 
-Lyra is a modern Android music player built with Kotlin and Jetpack Compose. It combines a clean dark interface with Firebase-backed song data and Media3 playback so listeners can discover music, search their library, and control playback from a focused now-playing experience.
+Lyra là một ứng dụng nghe nhạc Android hiện đại, được xây dựng bằng Kotlin và Jetpack Compose. Ứng dụng kết hợp giao diện tối giản với dữ liệu được quản lý qua Firebase và trình phát Media3, giúp người dùng khám phá bài hát, tìm kiếm thư viện nhạc và điều khiển phát nhạc trong một trải nghiệm tập trung.
 
-> This project is under active development. Some screens and settings are currently UI-first and will continue to receive persistence and account functionality.
+> Dự án đang được phát triển. Một số màn hình và phần cài đặt hiện mới tập trung vào giao diện, các chức năng lưu trữ và tài khoản sẽ tiếp tục được hoàn thiện.
 
-## Features
+## Tính năng
 
-- Discover screen with featured tracks, top songs, cover art, and a compact mini-player.
-- Search songs by title or artist.
-- Full-screen Now Playing experience with:
-  - play and pause controls;
-  - previous and next track navigation;
-  - seek/progress control;
-  - swipe gestures for track navigation;
-  - buffering and playback state handling.
-- Favorites and Downloads views for organizing music in the app experience.
-- Settings screen with a Firebase-backed user profile and playback/app preferences.
-- Remote cover art loading with Coil and fallback artwork.
-- Firebase Firestore integration for songs and user data.
-- Media3 ExoPlayer integration for streaming audio URLs.
+- Màn hình Khám phá với bài hát nổi bật, bài hát phổ biến, ảnh bìa và mini-player.
+- Tìm kiếm bài hát theo tên bài hát hoặc nghệ sĩ.
+- Màn hình Đang phát với:
+  - phát và tạm dừng;
+  - chuyển bài trước và bài tiếp theo;
+  - thanh tiến trình và tua bài hát;
+  - vuốt để chuyển bài;
+  - xử lý trạng thái buffering và phát nhạc.
+- Màn hình Yêu thích và Tải xuống để tổ chức các bài hát trong ứng dụng.
+- Màn hình Cài đặt với thông tin người dùng và các tùy chọn phát nhạc được tải từ Firebase.
+- Tải ảnh bìa từ mạng bằng Coil, kèm ảnh thay thế khi tải thất bại.
+- Tích hợp Firebase Firestore cho dữ liệu bài hát và người dùng.
+- Tích hợp Media3 ExoPlayer để phát các URL âm thanh.
 
-## Tech stack
+## Công nghệ sử dụng
 
 - Kotlin 2.2.21
 - Android Gradle Plugin 9.1.1
-- Jetpack Compose with Material 3
+- Jetpack Compose và Material 3
 - AndroidX Navigation Compose
-- AndroidX Lifecycle ViewModel and Compose runtime
-- AndroidX Media3 ExoPlayer and Media3 UI
-- Firebase Firestore and Firebase Storage
-- Coil 3 for image loading
+- AndroidX Lifecycle ViewModel và Compose Runtime
+- AndroidX Media3 ExoPlayer và Media3 UI
+- Firebase Firestore và Firebase Storage
+- Coil 3 để tải ảnh
 - Kotlin Coroutines
-- JUnit and kotlinx-coroutines-test
+- JUnit và kotlinx-coroutines-test
 
-## Architecture
+## Kiến trúc
 
-Lyra follows a lightweight MVVM and repository-based structure:
+Lyra sử dụng kiến trúc MVVM kết hợp Repository:
 
 ```text
 app/src/main/java/com/devpro/sound/
 ├── data/
-│   ├── mapper/              # Remote/model transformations
-│   ├── model/               # Domain models such as Song and User
-│   ├── remote/              # Firestore data sources and DTOs
-│   ├── repository/          # Repository contracts
-│   └── repositoryImpl/      # Repository implementations
-├── player/                  # Media3/ExoPlayer playback management
+│   ├── mapper/              # Chuyển đổi dữ liệu giữa các tầng
+│   ├── model/               # Model nghiệp vụ như Song và User
+│   ├── remote/              # Data source và DTO của Firestore
+│   ├── repository/          # Interface của repository
+│   └── repositoryImpl/      # Các triển khai repository
+├── player/                  # Quản lý Media3/ExoPlayer
 └── ui/
-    ├── components/          # Shared Compose components
+    ├── components/          # Component Compose dùng chung
     ├── discover/
     ├── downloads/
     ├── favorites/
@@ -57,7 +57,7 @@ app/src/main/java/com/devpro/sound/
     └── settings/
 ```
 
-The main flow is:
+Luồng dữ liệu chính:
 
 ```text
 Firestore → RemoteDataSource → Repository → ViewModel → Compose UI
@@ -65,41 +65,41 @@ Firestore → RemoteDataSource → Repository → ViewModel → Compose UI
                                              Media3 ExoPlayer
 ```
 
-## Requirements
+## Yêu cầu môi trường
 
-- Android Studio with Android SDK 37 available.
+- Android Studio có Android SDK 37.
 - JDK 11.
-- A Firebase project with a registered Android app using the application ID `com.devpro.sound`.
-- A device or emulator running Android 7.0 (API 24) or newer.
+- Một Firebase project đã đăng ký ứng dụng Android với application ID `com.devpro.sound`.
+- Thiết bị hoặc emulator chạy Android 7.0 (API 24) trở lên.
 
-## Setup
+## Cài đặt
 
-1. Clone the repository:
+1. Clone repository:
 
    ```bash
    git clone https://github.com/huanminh254/Lyra.git
    cd Lyra
    ```
 
-2. Open the project in Android Studio and allow Gradle to sync.
+2. Mở dự án bằng Android Studio và chờ Gradle đồng bộ.
 
-3. Create or select a Firebase project, register an Android app with package name `com.devpro.sound`, and download `google-services.json`.
+3. Tạo hoặc chọn một Firebase project, đăng ký ứng dụng Android với package name `com.devpro.sound`, sau đó tải file `google-services.json`.
 
-4. Place the downloaded file here:
+4. Đặt file vào vị trí:
 
    ```text
    app/google-services.json
    ```
 
-   The file is intentionally ignored by Git because it is environment-specific. Firebase client configuration should still be protected with correct Firestore and Storage security rules.
+   File này được Git bỏ qua vì phụ thuộc vào môi trường Firebase. Bạn vẫn cần cấu hình đúng Firebase Security Rules cho Firestore và Storage.
 
-5. Configure the Firestore collections described below, then run the `app` configuration on an emulator or connected Android device.
+5. Tạo các collection Firestore theo phần hướng dẫn bên dưới, sau đó chạy cấu hình `app` trên emulator hoặc thiết bị Android đã kết nối.
 
-## Firestore data model
+## Cấu trúc dữ liệu Firestore
 
-### `songs` collection
+### Collection `songs`
 
-Lyra loads songs from the `songs` collection ordered by the numeric `sortOrder` field. A document can contain:
+Lyra đọc bài hát từ collection `songs` và sắp xếp theo trường số `sortOrder`. Một document có thể chứa:
 
 ```json
 {
@@ -120,11 +120,11 @@ Lyra loads songs from the `songs` collection ordered by the numeric `sortOrder` 
 }
 ```
 
-`audioUrl` must be playable by Media3. `coverUrl` is used by Coil for artwork.
+`audioUrl` phải là URL có thể phát bằng Media3. `coverUrl` được dùng bởi Coil để hiển thị ảnh bìa.
 
-### `users` collection
+### Collection `users`
 
-The current implementation reads the `user_001` document by default:
+Phiên bản hiện tại mặc định đọc document `user_001`:
 
 ```json
 {
@@ -138,44 +138,44 @@ The current implementation reads the `user_001` document by default:
 }
 ```
 
-## Build and test
+## Build và kiểm thử
 
-Build the debug APK:
+Build APK debug:
 
 ```bash
 ./gradlew assembleDebug
 ```
 
-Run unit tests:
+Chạy unit test:
 
 ```bash
 ./gradlew test
 ```
 
-Run instrumented tests on a connected device or emulator:
+Chạy instrumented test trên thiết bị hoặc emulator:
 
 ```bash
 ./gradlew connectedAndroidTest
 ```
 
-## Project status
+## Trạng thái dự án
 
-The core browsing, search, remote song loading, and playback flows are implemented. Favorites, downloads, authentication, and preference persistence are part of the ongoing product roadmap.
+Các luồng khám phá, tìm kiếm, tải dữ liệu bài hát từ xa và phát nhạc đã được triển khai. Chức năng yêu thích, tải xuống, xác thực người dùng và lưu tùy chọn cài đặt vẫn đang nằm trong lộ trình phát triển.
 
-## Media and licensing
+## Media và bản quyền
 
-The repository does not include locally prepared audio or cover-art upload folders. Add only media that you own or are licensed to distribute, and review the license and redistribution terms of every external source before publishing or deploying content through Firebase Storage.
+Repository không bao gồm các thư mục audio hoặc ảnh bìa được chuẩn bị cục bộ để upload. Chỉ sử dụng media do bạn sở hữu hoặc có giấy phép phân phối. Hãy kiểm tra điều khoản bản quyền và phân phối của mọi nguồn bên ngoài trước khi đưa nội dung lên Firebase Storage hoặc phát hành ứng dụng.
 
-## Contributing
+## Đóng góp
 
-Contributions are welcome. Before opening a pull request:
+Mọi đóng góp đều được chào đón. Trước khi tạo pull request:
 
-1. Create a focused branch from `main`.
-2. Keep UI, data, and playback changes separated where practical.
-3. Add or update tests for behavior changes.
-4. Run `./gradlew test` and verify the app on an emulator or device.
-5. Describe the user-facing change and any Firebase schema changes in the pull request.
+1. Tạo một branch riêng từ `main`.
+2. Tách riêng các thay đổi về giao diện, dữ liệu và trình phát khi có thể.
+3. Thêm hoặc cập nhật test cho các thay đổi về hành vi.
+4. Chạy `./gradlew test` và kiểm tra ứng dụng trên emulator hoặc thiết bị thật.
+5. Mô tả thay đổi hướng đến người dùng và các thay đổi schema Firebase trong pull request.
 
-## License
+## Giấy phép
 
-No license has been selected for this project yet. Until a license is added, all rights are reserved by the copyright holder.
+Dự án hiện chưa chọn giấy phép mã nguồn mở. Cho đến khi có license chính thức, mọi quyền được bảo lưu bởi chủ sở hữu bản quyền.
