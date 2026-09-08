@@ -173,6 +173,8 @@ Các luồng khám phá, tìm kiếm, tải dữ liệu bài hát từ xa và ph
 
 Repository không bao gồm các thư mục audio hoặc ảnh bìa được chuẩn bị cục bộ để upload. Chỉ sử dụng media do bạn sở hữu hoặc có giấy phép phân phối. Hãy kiểm tra điều khoản bản quyền và phân phối của mọi nguồn bên ngoài trước khi đưa nội dung lên Firebase Storage hoặc phát hành ứng dụng.
 
+Copyright © 2026 Nguyen Minh Huan. Mã nguồn, tài liệu và cấu hình riêng của dự án thuộc về tác giả, trừ khi có ghi chú khác. Nội dung audio, ảnh bìa và tài nguyên bên thứ ba thuộc về chủ sở hữu tương ứng.
+
 ## Đóng góp
 
 Mọi đóng góp đều được chào đón. Trước khi tạo pull request:
@@ -182,6 +184,8 @@ Mọi đóng góp đều được chào đón. Trước khi tạo pull request:
 3. Thêm hoặc cập nhật test cho các thay đổi về hành vi.
 4. Chạy `./gradlew test` và kiểm tra ứng dụng trên emulator hoặc thiết bị thật.
 5. Mô tả thay đổi hướng đến người dùng và các thay đổi schema Firebase trong pull request.
+
+Nếu muốn đề xuất ý tưởng, báo lỗi hoặc gửi đóng góp, vui lòng mở issue/pull request hoặc liên hệ [minhhuan110702@gmail.com](mailto:minhhuan110702@gmail.com).
 
 ## Giấy phép
 
