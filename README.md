@@ -65,6 +65,13 @@ Firestore → RemoteDataSource → Repository → ViewModel → Compose UI
                                              Media3 ExoPlayer
 ```
 
+## Đặc tả use case và sơ đồ quan hệ
+
+- [Đặc tả use case](docs/use-cases.md)
+- [Mã nguồn sơ đồ quan hệ](docs/diagrams/lyra-architecture.dot)
+
+![Sơ đồ quan hệ Lyra](docs/diagrams/lyra-architecture.svg)
+
 ## Yêu cầu môi trường
 
 - Android Studio có Android SDK 37.

@@ -1,0 +1,25 @@
+digraph Lyra {
+  graph [bgcolor="#0d1117", rankdir=LR, pad="0.3", nodesep="0.45", ranksep="0.75", fontname="Arial"];
+  node [shape=box, style="rounded,filled", color="#30363d", fillcolor="#161b22", fontcolor="#f0f6fc", fontname="Arial", margin="0.16,0.10"];
+  edge [color="#58a6ff", penwidth=1.5, arrowsize=0.8, fontname="Arial", fontcolor="#8b949e"];
+
+  user [label="Người nghe", fillcolor="#1f6feb"];
+  ui [label="Compose UI\nDiscover • Search • Now Playing\nFavorites • Downloads • Settings"];
+  vm [label="ViewModel\nScreen state + actions"];
+  repo [label="Repository\nSong / User"];
+  remote [label="Remote data source\nFirestore mapper + DTO"];
+  fire [label="Firebase\nFirestore / Storage"];
+  player [label="AudioPlayerManager\nMedia3 ExoPlayer"];
+  audio [label="audioUrl\nAudio stream"];
+  cover [label="coverUrl\nCoil image loader"];
+
+  user -> ui [label=" tương tác"];
+  ui -> vm [label=" event / state"];
+  vm -> repo [label=" truy vấn"];
+  repo -> remote [label=" lấy dữ liệu"];
+  remote -> fire [label=" đọc songs/users"];
+  vm -> player [label=" play / seek / next"];
+  player -> audio [label=" phát"];
+  ui -> cover [label=" tải ảnh bìa"];
+  cover -> fire [label=" URL ảnh"];
+}
