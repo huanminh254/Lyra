@@ -14,6 +14,11 @@
 .cxx
 local.properties
 
+# Firebase configuration and locally prepared media uploads
+app/google-services.json
+/firebase_upload/
+/firebase_upload_ready/
+
 # Local agent/tooling checkouts
 /tools/Superpowers/
 /tools/codegraph/

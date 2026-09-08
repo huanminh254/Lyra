@@ -22,6 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Sound"
+rootProject.name = "Lyra"
 include(":app")
- 
