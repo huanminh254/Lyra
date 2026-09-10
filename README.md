@@ -1,6 +1,6 @@
 # Lyra
 
-Lyra là một ứng dụng nghe nhạc Android hiện đại, được xây dựng bằng Kotlin và Jetpack Compose. Ứng dụng kết hợp giao diện tối giản với dữ liệu được quản lý qua Firebase và trình phát Media3, giúp người dùng khám phá bài hát, tìm kiếm thư viện nhạc và điều khiển phát nhạc trong một trải nghiệm tập trung.
+Lyra là một ứng dụng nghe nhạc Android hiện đại, được xây dựng bằng Kotlin, XML Layouts và AndroidX Views. Ứng dụng kết hợp giao diện tối giản với dữ liệu được quản lý qua Firebase và trình phát Media3, giúp người dùng khám phá bài hát, tìm kiếm thư viện nhạc và điều khiển phát nhạc trong một trải nghiệm tập trung.
 
 > Dự án đang được phát triển. Một số màn hình và phần cài đặt hiện mới tập trung vào giao diện, các chức năng lưu trữ và tài khoản sẽ tiếp tục được hoàn thiện.
 
@@ -24,10 +24,9 @@ Lyra là một ứng dụng nghe nhạc Android hiện đại, được xây d�
 
 - Kotlin 2.2.21
 - Android Gradle Plugin 9.1.1
-- Jetpack Compose và Material 3
-- AndroidX Navigation Compose
-- AndroidX Lifecycle ViewModel và Compose Runtime
-- AndroidX Media3 ExoPlayer và Media3 UI
+- XML Layouts, ViewBinding, Fragment và RecyclerView
+- AndroidX Lifecycle ViewModel và LiveData
+- AndroidX Media3 ExoPlayer
 - Firebase Firestore và Firebase Storage
 - Coil 3 để tải ảnh
 - Kotlin Coroutines
@@ -47,7 +46,7 @@ app/src/main/java/com/devpro/sound/
 │   └── repositoryImpl/      # Các triển khai repository
 ├── player/                  # Quản lý Media3/ExoPlayer
 └── ui/
-    ├── components/          # Component Compose dùng chung
+    ├── components/          # Adapter và component View dùng chung
     ├── discover/
     ├── downloads/
     ├── favorites/
@@ -60,7 +59,7 @@ app/src/main/java/com/devpro/sound/
 Luồng dữ liệu chính:
 
 ```text
-Firestore → RemoteDataSource → Repository → ViewModel → Compose UI
+Firestore → RemoteDataSource → Repository → ViewModel → XML UI
                                                    ↓
                                              Media3 ExoPlayer
 ```

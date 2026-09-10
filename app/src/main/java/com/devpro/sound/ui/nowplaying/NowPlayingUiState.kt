@@ -8,7 +8,7 @@ data class NowPlayingUiState(
     val isBuffering: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val isPlaying: Boolean = true,
+    val isPlaying: Boolean = false,
     val currentPositionMs: Long = 0L,
     val durationMs: Long = 0L,
     val progress: Float = 0f

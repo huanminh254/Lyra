@@ -2,7 +2,7 @@
 
 ## 1. Phạm vi hệ thống
 
-Lyra là ứng dụng nghe nhạc Android cho phép người dùng khám phá danh sách bài hát, tìm kiếm nội dung, mở màn hình đang phát và điều khiển Media3 ExoPlayer. Dữ liệu bài hát và cấu hình người dùng được lấy từ Firebase Firestore; ảnh bìa được tải qua Coil.
+Lyra là ứng dụng nghe nhạc Android cho phép người dùng khám phá danh sách bài hát, tìm kiếm nội dung, mở màn hình đang phát và điều khiển Media3 ExoPlayer. Dữ liệu bài hát và cấu hình người dùng được lấy từ Firebase Firestore; ảnh bìa được tải qua Coil. Giao diện được xây dựng bằng XML Layouts, Fragment và RecyclerView.
 
 Phiên bản hiện tại tập trung vào trải nghiệm khám phá và phát nhạc. Các chức năng lưu yêu thích, tải xuống thực tế và xác thực người dùng mới có màn hình/luồng giao diện hoặc đang trong lộ trình hoàn thiện.
 
@@ -100,4 +100,3 @@ Người nghe có thể điều hướng tới Favorites hoặc Downloads từ n
 - Tách UI, ViewModel, repository và data source để dễ kiểm thử.
 - Player cần giải phóng tài nguyên khi vòng đời màn hình/ứng dụng kết thúc.
 - Chỉ sử dụng media có quyền phân phối.
-

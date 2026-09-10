@@ -1,9 +1,9 @@
 package com.devpro.sound.ui.settings
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.devpro.sound.data.model.User
 import com.devpro.sound.data.repository.UserRepository
@@ -11,17 +11,14 @@ import com.devpro.sound.data.repositoryImpl.UserRepositoryImpl
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
-    private val userRepository: UserRepository = UserRepositoryImpl()
+    private val userRepository: UserRepository
 ) : ViewModel() {
-
-    var user by mutableStateOf<User?>(null)
-        private set
-
-    var isLoading by mutableStateOf(true)
-        private set
-
-    var errorMessage by mutableStateOf<String?>(null)
-        private set
+    private val _user = MutableLiveData<User?>()
+    val user: LiveData<User?> = _user
+    private val _isLoading = MutableLiveData(true)
+    val isLoading: LiveData<Boolean> = _isLoading
+    private val _errorMessage = MutableLiveData<String?>()
+    val errorMessage: LiveData<String?> = _errorMessage
 
     init {
         loadCurrentUser()
@@ -29,18 +26,22 @@ class SettingsViewModel(
 
     private fun loadCurrentUser() {
         viewModelScope.launch {
-            isLoading = true
-            errorMessage = null
-
-            runCatching {
-                userRepository.getCurrentUser()
-            }.onSuccess { currentUser ->
-                user = currentUser
-                isLoading = false
-            }.onFailure { throwable ->
-                isLoading = false
-                errorMessage = throwable.message ?: "Không tải được thông tin người dùng"
-            }
+            _isLoading.value = true
+            _errorMessage.value = null
+            runCatching { userRepository.getCurrentUser() }
+                .onSuccess {
+                    _user.value = it
+                    _isLoading.value = false
+                }
+                .onFailure {
+                    _isLoading.value = false
+                    _errorMessage.value = it.message ?: "Không tải được thông tin người dùng"
+                }
         }
+    }
+
+    class Factory(private val repository: UserRepository = UserRepositoryImpl()) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = SettingsViewModel(repository) as T
     }
 }

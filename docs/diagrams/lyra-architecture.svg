@@ -1,25 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc">
-  <title id="title">Lyra architecture relationship diagram</title>
-  <desc id="desc">User interface connects to ViewModels, repositories, Firebase and Media3 ExoPlayer.</desc>
-  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#58a6ff"/></marker></defs>
+  <title id="title">Lyra XML architecture</title>
+  <desc id="desc">XML fragments and view models connect repositories to Firebase and Media3 ExoPlayer.</desc>
   <rect width="1200" height="650" fill="#0d1117"/>
-  <text x="50" y="58" fill="#f0f6fc" font-family="Arial,sans-serif" font-size="30" font-weight="700">Lyra — sơ đồ quan hệ</text>
-  <g fill="#161b22" stroke="#30363d" stroke-width="2">
-    <rect x="50" y="255" width="170" height="75" rx="14" fill="#1f6feb"/>
-    <rect x="285" y="220" width="220" height="145" rx="14"/>
-    <rect x="570" y="220" width="220" height="145" rx="14"/>
-    <rect x="855" y="120" width="250" height="110" rx="14"/>
-    <rect x="855" y="290" width="250" height="110" rx="14"/>
-    <rect x="855" y="460" width="250" height="110" rx="14"/>
+  <g font-family="Arial, sans-serif" fill="#f0f6fc">
+    <text x="60" y="70" font-size="30" font-weight="700">Lyra Architecture</text>
+    <g stroke="#58a6ff" stroke-width="3" fill="#161b22">
+      <rect x="60" y="220" width="220" height="120" rx="18"/><rect x="350" y="220" width="220" height="120" rx="18"/>
+      <rect x="640" y="220" width="220" height="120" rx="18"/><rect x="930" y="220" width="210" height="120" rx="18"/>
+    </g>
+    <g text-anchor="middle" font-size="22">
+      <text x="170" y="270">XML UI</text><text x="170" y="305" font-size="17">Activity • Fragments</text>
+      <text x="460" y="270">ViewModel</text><text x="460" y="305" font-size="17">LiveData + actions</text>
+      <text x="750" y="270">Repository</text><text x="750" y="305" font-size="17">Models + mappers</text>
+      <text x="1035" y="270">Firebase</text><text x="1035" y="305" font-size="17">Firestore</text>
+    </g>
+    <g stroke="#58a6ff" stroke-width="3" marker-end="url(#arrow)"><path d="M280 280h70"/><path d="M570 280h70"/><path d="M860 280h70"/></g>
+    <rect x="410" y="440" width="380" height="100" rx="18" fill="#161b22" stroke="#58a6ff" stroke-width="3"/>
+    <text x="600" y="485" text-anchor="middle" font-size="22">Media3 ExoPlayer</text><text x="600" y="515" text-anchor="middle" font-size="17">AudioPlayerManager • audioUrl</text>
+    <path d="M460 340v55h140v45M640 340v55h-40" fill="none" stroke="#58a6ff" stroke-width="3" marker-end="url(#arrow)"/>
   </g>
-  <g fill="#f0f6fc" font-family="Arial,sans-serif" text-anchor="middle">
-    <text x="135" y="285" font-size="20" font-weight="700">Người nghe</text><text x="135" y="310" font-size="15">tương tác ứng dụng</text>
-    <text x="395" y="260" font-size="20" font-weight="700">Compose UI</text><text x="395" y="288" font-size="15">Discover • Search</text><text x="395" y="312" font-size="15">Now Playing • Settings</text><text x="395" y="336" font-size="15">Favorites • Downloads</text>
-    <text x="680" y="260" font-size="20" font-weight="700">ViewModel</text><text x="680" y="288" font-size="15">screen state</text><text x="680" y="312" font-size="15">user actions</text><text x="680" y="336" font-size="15">navigation</text>
-    <text x="980" y="158" font-size="20" font-weight="700">Repository</text><text x="980" y="185" font-size="15">Song / User</text><text x="980" y="207" font-size="15">Remote data source</text>
-    <text x="980" y="328" font-size="20" font-weight="700">Firebase</text><text x="980" y="355" font-size="15">Firestore • Storage</text><text x="980" y="377" font-size="15">songs / users</text>
-    <text x="980" y="498" font-size="20" font-weight="700">Media3 ExoPlayer</text><text x="980" y="526" font-size="15">audioUrl • buffering</text><text x="980" y="548" font-size="15">play / seek / next</text>
-  </g>
-  <g stroke="#58a6ff" stroke-width="3" fill="none" marker-end="url(#arrow)"><path d="M220 292 L285 292"/><path d="M505 292 L570 292"/><path d="M790 260 L855 190"/><path d="M980 230 L980 290"/><path d="M790 330 L855 500"/><path d="M980 460 L980 400"/></g>
-  <g fill="#8b949e" font-family="Arial,sans-serif" font-size="14"><text x="240" y="280">event</text><text x="520" y="280">state</text><text x="808" y="220">query</text><text x="1000" y="265">read</text><text x="810" y="425">playback</text></g>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 z" fill="#58a6ff"/></marker></defs>
 </svg>

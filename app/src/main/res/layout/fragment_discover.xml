@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/screen_background">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:paddingTop="24dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingStart="24dp" android:paddingEnd="16dp">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Discover" android:textColor="@color/white" android:textSize="34sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Find your next favorite track" android:textColor="@color/muted_text" android:textSize="15sp" />
+            </LinearLayout>
+            <ImageButton android:id="@+id/discover_search" android:layout_width="52dp" android:layout_height="52dp" android:background="@android:color/transparent" android:contentDescription="Tìm kiếm" android:src="@android:drawable/ic_menu_search" />
+        </LinearLayout>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="24dp" android:layout_marginTop="28dp" android:text="Top Songs" android:textColor="@color/white" android:textSize="24sp" android:textStyle="bold" />
+        <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/discover_list" android:layout_width="match_parent" android:layout_height="match_parent" android:clipToPadding="false" android:paddingBottom="90dp" />
+            <ProgressBar android:id="@+id/discover_loading" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" />
+            <TextView android:id="@+id/discover_error" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="center" android:gravity="center" android:padding="24dp" android:textColor="@color/muted_text" android:textSize="16sp" android:visibility="gone" />
+        </FrameLayout>
+    </LinearLayout>
+    <include android:id="@+id/discover_mini_player" layout="@layout/view_mini_player" android:layout_width="match_parent" android:layout_height="72dp" android:layout_gravity="bottom" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:layout_marginBottom="8dp" />
+</FrameLayout>

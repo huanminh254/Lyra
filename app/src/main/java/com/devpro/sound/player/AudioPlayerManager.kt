@@ -1,110 +1,106 @@
 package com.devpro.sound.player
 
 import android.content.Context
+import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 
-class AudioPlayerManager (
-    context: Context
-){
+interface AudioPlayer {
+    fun hasCurrentSong(): Boolean
+    fun play(audioUrl: String)
+    fun setPlayList(audioUrls: List<String>)
+    fun playAt(index: Int)
+    fun playNext()
+    fun playPrevious()
+    fun hasNext(): Boolean
+    fun hasPrevious(): Boolean
+    fun getCurrentSongIndex(): Int
+    fun pause()
+    fun resume()
+    fun isPlaying(): Boolean
+    fun seekTo(positionMs: Long)
+    fun getCurrentPosition(): Long
+    fun getDuration(): Long
+    fun addListener(
+        onIsPlayingChanged: (Boolean) -> Unit,
+        onPlaybackStateChanged: (Int) -> Unit,
+        onMediaItemTransition: (Int) -> Unit = {}
+    )
+    fun release()
+}
+
+@OptIn(markerClass = [UnstableApi::class])
+class AudioPlayerManager(context: Context) : AudioPlayer {
     private val loadControl = DefaultLoadControl.Builder()
-        .setBufferDurationsMs(
-            10_000,
-            50_000,
-            1_500,
-            3_000
-        ).build()
+        .setBufferDurationsMs(10_000, 50_000, 1_500, 3_000)
+        .build()
+
     private val player = ExoPlayer.Builder(context)
         .setLoadControl(loadControl)
         .build()
-    fun hasCurrentSong(): Boolean{
-        return player.currentMediaItem != null
-    }
-    fun play(audioUrl: String){
-        val mediaItem = MediaItem.fromUri(audioUrl)
-        player.setMediaItem(mediaItem)
+
+    override fun hasCurrentSong(): Boolean = player.currentMediaItem != null
+
+    override fun play(audioUrl: String) {
+        player.setMediaItem(MediaItem.fromUri(audioUrl))
         player.prepare()
         player.play()
     }
-    fun clear(){
-        player.clearMediaItems()
-    }
-    fun setPlayList(audioUrls: List<String>){
-        val mediaItems = audioUrls.map{audioUrl ->
-            MediaItem.fromUri(audioUrl) }
-        player.setMediaItems(mediaItems)
+
+    override fun setPlayList(audioUrls: List<String>) {
+        player.setMediaItems(audioUrls.map(MediaItem::fromUri))
         player.prepare()
     }
-    fun playNext(){
-        player.seekToNextMediaItem()
-    }
-    fun playPrevious(){
-        player.seekToPreviousMediaItem()
-    }
-    fun hasNext(): Boolean{ // Kiểm tra có bài hát tiếp theo hay không
-        return player.hasNextMediaItem()
-    }
-    fun hasPrevious(): Boolean{ // Kiểm tra có bài hát trước đó hay không
-        return player.hasPreviousMediaItem()
-    }
-    fun getCurrentSongIndex(): Int{ // Trả về vị trí bài hát hiện tại
-        return player.currentMediaItemIndex
-    }
-    fun pause(){
-        player.pause()
-    }
-    fun release(){
-        player.release()
-    }
-    fun resume(){
-        player.play()
-    }
-    fun isPlaying(): Boolean{
-        return player.isPlaying
-    }
-    fun seekTo(positionMs: Long){
-        player.seekTo(positionMs)
-    }
-    fun getCurrentPosition(): Long{
-        return player.currentPosition
-    }
-    fun getDuration(): Long{
-        return player.duration
-    }
-    fun addListener(
-        onIsPlayingChanged: (Boolean) -> Unit, // Trạng thái phát nhạc
-        onPlaybackStateChanged: (Int) -> Unit // Trạng thái player
-    ){
-        player.addListener(
-            object: Player.Listener{
-                override fun onIsPlayingChanged(isPlaying: Boolean) {
-                    onIsPlayingChanged(isPlaying)
-                }
-                override fun onPlaybackStateChanged(playbackState: Int) {
-                    onPlaybackStateChanged(playbackState)
-                }
-            }
-        )
-    }
-    fun isBuffering(): Boolean{
-        return player.playbackState == Player.STATE_BUFFERING
-    }
-    fun isEnded(): Boolean{
-        return player.playbackState == Player.STATE_ENDED
-    }
-    fun stop(){
-        player.stop()
-    }
-    fun setVolume(volume: Float){
-        player.volume = volume
-    }
-    fun getVolume(): Float{
-        return player.volume
-    }
-    fun playAt(index: Int){
+
+    override fun playAt(index: Int) {
         player.seekToDefaultPosition(index)
         player.play()
     }
+
+    override fun playNext() = player.seekToNextMediaItem()
+
+    override fun playPrevious() = player.seekToPreviousMediaItem()
+
+    override fun hasNext(): Boolean = player.hasNextMediaItem()
+
+    override fun hasPrevious(): Boolean = player.hasPreviousMediaItem()
+
+    override fun getCurrentSongIndex(): Int = player.currentMediaItemIndex
+
+    override fun pause() = player.pause()
+
+    override fun resume() = player.play()
+
+    override fun isPlaying(): Boolean = player.isPlaying
+
+    override fun seekTo(positionMs: Long) = player.seekTo(positionMs)
+
+    override fun getCurrentPosition(): Long = player.currentPosition
+
+    override fun getDuration(): Long = player.duration
+
+    override fun addListener(
+        onIsPlayingChanged: (Boolean) -> Unit,
+        onPlaybackStateChanged: (Int) -> Unit,
+        onMediaItemTransition: (Int) -> Unit
+    ) {
+        player.addListener(object : Player.Listener {
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                onIsPlayingChanged(isPlaying)
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                onPlaybackStateChanged(playbackState)
+            }
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                onMediaItemTransition(player.currentMediaItemIndex)
+            }
+        })
+    }
+
+    override fun release() = player.release()
 }

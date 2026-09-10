@@ -1,149 +1,172 @@
 package com.devpro.sound.ui.nowplaying
 
-import android.app.Application
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
 import com.devpro.sound.data.model.Song
 import com.devpro.sound.data.repository.SongRepository
 import com.devpro.sound.data.repositoryImpl.SongRepositoryImpl
+import com.devpro.sound.player.AudioPlayer
 import com.devpro.sound.player.AudioPlayerManager
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class NowPlayingViewModel(
-    application: Application
-) : AndroidViewModel(application) {
+    private val songRepository: SongRepository,
+    private val audioPlayer: AudioPlayer
+) : ViewModel() {
 
-    private val songRepository: SongRepository = SongRepositoryImpl()
+    private val _uiState = MutableLiveData(NowPlayingUiState(isLoading = true))
+    val uiState: LiveData<NowPlayingUiState> = _uiState
 
-    private val audioPlayerManager = AudioPlayerManager(
-        context = application.applicationContext
-    )
-
-    var uiState by mutableStateOf(NowPlayingUiState(isLoading = true))
-        private set
+    private var playableSongs: List<Song> = emptyList()
+    private var progressJob: Job? = null
 
     init {
         observePlayerState()
-        startProgressUpdates()
         loadSongs()
     }
 
     fun loadSongs() {
         viewModelScope.launch {
-            uiState = uiState.copy(isLoading = true, errorMessage = null)
-
-            runCatching {
-                songRepository.getSongs()
-            }.onSuccess { songs ->
-                audioPlayerManager.setPlayList(
-                    songs.mapNotNull { song->
-                        song.audioUrl
+            updateState { it.copy(isLoading = true, errorMessage = null) }
+            runCatching { songRepository.getSongs() }
+                .onSuccess { songs ->
+                    playableSongs = songs.filter { !it.audioUrl.isNullOrBlank() }
+                    audioPlayer.setPlayList(playableSongs.mapNotNull { it.audioUrl })
+                    updateState {
+                        it.copy(
+                            song = playableSongs.firstOrNull() ?: songs.firstOrNull(),
+                            songs = songs,
+                            isLoading = false,
+                            errorMessage = null,
+                            isPlaying = audioPlayer.isPlaying()
+                        )
                     }
-                )
-                uiState = uiState.copy(
-                    song = songs.firstOrNull(),
-                    songs = songs,
-                    isLoading = false,
-                    errorMessage = null
-                )
-            }.onFailure { throwable ->
-                uiState = uiState.copy(
-                    isLoading = false,
-                    errorMessage = throwable.message ?: "Không tải được danh sách bài hát"
-                )
-            }
+                }
+                .onFailure { throwable ->
+                    updateState {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = throwable.message ?: "Không tải được danh sách bài hát"
+                        )
+                    }
+                }
         }
     }
 
     fun onPlayPauseClick() {
-        val currentSong = uiState.song ?: return
-        val audioUrl = currentSong.audioUrl ?: return
+        val currentSong = _uiState.value?.song ?: return
+        val audioUrl = currentSong.audioUrl?.takeIf { it.isNotBlank() } ?: return
 
-        if (!audioPlayerManager.hasCurrentSong()) {
-            audioPlayerManager.play(audioUrl)
-            uiState = uiState.copy(isPlaying = true)
-            return
-        }
-        if (audioPlayerManager.isPlaying()) {
-            audioPlayerManager.pause()
-            uiState = uiState.copy(isPlaying = false)
+        if (!audioPlayer.hasCurrentSong()) {
+            audioPlayer.play(audioUrl)
+        } else if (audioPlayer.isPlaying()) {
+            audioPlayer.pause()
         } else {
-            audioPlayerManager.resume()
-            uiState = uiState.copy(isPlaying = true)
+            audioPlayer.resume()
         }
+        updateState { it.copy(isPlaying = audioPlayer.isPlaying()) }
     }
-    fun onSongClick(song: Song){
-        val index = uiState.songs.indexOfFirst { currentSong->
-            currentSong.id == song.id
-        }
-        if(index == -1) return
-        audioPlayerManager.playAt(index)
-        uiState = uiState.copy(
-            song = song,
-            isPlaying = true
-        )
+
+    fun onSongClick(song: Song) {
+        val index = playableSongs.indexOfFirst { it.id == song.id }
+        if (index == -1) return
+        audioPlayer.playAt(index)
+        updateState { it.copy(song = song, isPlaying = audioPlayer.isPlaying()) }
     }
+
+    fun onSeek(progress: Float) {
+        val duration = audioPlayer.getDuration()
+        if (duration <= 0L) return
+        val safeProgress = progress.coerceIn(0f, 1f)
+        val seekPosition = (duration * safeProgress).toLong()
+        audioPlayer.seekTo(seekPosition)
+        updateState { it.copy(progress = safeProgress, currentPositionMs = seekPosition) }
+    }
+
+    fun onNextClick() {
+        if (!audioPlayer.hasNext()) return
+        audioPlayer.playNext()
+        syncCurrentSong()
+    }
+
+    fun onPreviousClick() {
+        if (!audioPlayer.hasPrevious()) return
+        audioPlayer.playPrevious()
+        syncCurrentSong()
+    }
+
     override fun onCleared() {
-        super.onCleared()
-        audioPlayerManager.release()
+        audioPlayer.release()
     }
-    private fun observePlayerState(){
-        audioPlayerManager.addListener(
-            onIsPlayingChanged = {isPlaying ->
-                uiState = uiState.copy(isPlaying = isPlaying)
+
+    private fun observePlayerState() {
+        audioPlayer.addListener(
+            onIsPlayingChanged = { isPlaying ->
+                updateState { it.copy(isPlaying = isPlaying) }
+                if (isPlaying) startProgressUpdates() else progressJob?.cancel()
             },
             onPlaybackStateChanged = { playbackState ->
-                uiState = uiState.copy(
-                    isBuffering = playbackState == Player.STATE_BUFFERING
-                )
-            }
+                updateState { it.copy(isBuffering = playbackState == Player.STATE_BUFFERING) }
+            },
+            onMediaItemTransition = { syncCurrentSong() }
         )
     }
-    private fun startProgressUpdates(){
-        viewModelScope.launch {
-            while (true){
-                val currentPosition = audioPlayerManager.getCurrentPosition()
-                val duration = audioPlayerManager.getDuration()
-                val progress = if (duration > 0){
-                    currentPosition.toFloat() / duration.toFloat()
-                }else{ 0f}
-                uiState = uiState.copy(
-                    currentPositionMs = currentPosition,
-                    durationMs = duration,
-                    progress = progress
-                )
+
+    private fun startProgressUpdates() {
+        progressJob?.cancel()
+        progressJob = viewModelScope.launch {
+            while (isActive && audioPlayer.isPlaying()) {
+                val currentPosition = audioPlayer.getCurrentPosition()
+                val duration = audioPlayer.getDuration()
+                val progress = if (duration > 0) {
+                    (currentPosition.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+                } else {
+                    0f
+                }
+                updateState {
+                    it.copy(
+                        currentPositionMs = currentPosition.coerceAtLeast(0L),
+                        durationMs = duration.coerceAtLeast(0L),
+                        progress = progress
+                    )
+                }
                 delay(500)
             }
         }
     }
-    private fun onSeek(progress: Float){
-        val duration = audioPlayerManager.getDuration()
-        if(duration<0) return
-        val safeProgress = progress.coerceIn(0f,1f)
-        val seekPosition = (duration * safeProgress).toLong()
-        audioPlayerManager.seekTo(seekPosition)
-        uiState = uiState.copy(progress = safeProgress, currentPositionMs = seekPosition)
-    }
-    fun onNextClick(){
-        if(!audioPlayerManager.hasNext()) return
-        audioPlayerManager.playNext()
-        uiState = uiState.copy(
-            song = uiState.songs.getOrNull(audioPlayerManager.getCurrentSongIndex()),
-            isPlaying = audioPlayerManager.isPlaying()
-        )
-    }
-    fun onPreviousClick(){
-        if(!audioPlayerManager.hasPrevious()) return
-        audioPlayerManager.playPrevious()
-        uiState = uiState.copy(
-            song = uiState.songs.getOrNull(audioPlayerManager.getCurrentSongIndex()),
-            isPlaying = audioPlayerManager.isPlaying()
-        )
+
+    private fun syncCurrentSong() {
+        val song = playableSongs.getOrNull(audioPlayer.getCurrentSongIndex()) ?: return
+        updateState { it.copy(song = song, isPlaying = audioPlayer.isPlaying()) }
     }
 
+    private fun updateState(transform: (NowPlayingUiState) -> NowPlayingUiState) {
+        _uiState.value = _uiState.value?.let(transform)
+    }
+
+    class Factory(
+        private val repository: SongRepository,
+        private val player: AudioPlayer
+    ) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return NowPlayingViewModel(repository, player) as T
+        }
+
+        companion object {
+            fun create(context: android.content.Context): Factory {
+                return Factory(
+                    repository = SongRepositoryImpl(),
+                    player = AudioPlayerManager(context.applicationContext)
+                )
+            }
+        }
+    }
 }

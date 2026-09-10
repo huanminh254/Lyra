@@ -4,7 +4,7 @@ digraph Lyra {
   edge [color="#58a6ff", penwidth=1.5, arrowsize=0.8, fontname="Arial", fontcolor="#8b949e"];
 
   user [label="Người nghe", fillcolor="#1f6feb"];
-  ui [label="Compose UI\nDiscover • Search • Now Playing\nFavorites • Downloads • Settings"];
+  ui [label="XML UI + Fragments\nDiscover • Search • Now Playing\nFavorites • Downloads • Settings"];
   vm [label="ViewModel\nScreen state + actions"];
   repo [label="Repository\nSong / User"];
   remote [label="Remote data source\nFirestore mapper + DTO"];
