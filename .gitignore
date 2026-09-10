@@ -27,3 +27,4 @@ app/google-services.json
 /.agents/
 /.codegraph/
 /.specify/
+/.idea/

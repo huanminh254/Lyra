@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="com.obiscr.chatgpt.settings.EasyCodeState">
-    <option name="projectFiles" value="$PROJECT_DIR$/app/src/androidTest/java/com/devpro/sound/ExampleInstrumentedTest.kt;/Users/huan/AndroidStudioProjects/Sound/app/src/main/java/com/devpro/sound/MainActivity.kt;/Users/huan/AndroidStudioProjects/Sound/app/src/test/java/com/devpro/sound/ExampleUnitTest.kt;/Users/huan/AndroidStudioProjects/Sound/app/build.gradle.kts;/Users/huan/AndroidStudioProjects/Sound/build.gradle.kts;/Users/huan/AndroidStudioProjects/Sound/settings.gradle.kts" />
-  </component>
-</project>
