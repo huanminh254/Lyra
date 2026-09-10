@@ -22,3 +22,8 @@ app/google-services.json
 # Local agent/tooling checkouts
 /tools/Superpowers/
 /tools/codegraph/
+
+# Local project tooling
+/.agents/
+/.codegraph/
+/.specify/
