@@ -1,31 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/screen_background"
+    android:clipChildren="false"
     tools:context=".MainActivity">
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragment_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_navigation"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:background="@color/panel_background"
-        app:itemIconTint="@color/bottom_nav_tint"
-        app:itemTextColor="@color/bottom_nav_tint"
-        app:menu="@menu/bottom_nav_menu"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintBottom_toBottomOf="parent" />
+    <include
+        android:id="@+id/main_mini_player"
+        layout="@layout/view_mini_player"
+        android:layout_width="0dp"
+        android:layout_height="72dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="14dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/bottom_navigation"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
+    <FrameLayout
+        android:id="@+id/bottom_navigation"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:clipChildren="false"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="24dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageButton
+                android:id="@+id/menu_toggle_main"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_gravity="center"
+                android:backgroundTint="@color/black"
+                android:background="@drawable/play_circle_background"
+                android:src="@drawable/ic_music_note"
+                android:contentDescription="Mở điều hướng" />
+            <ImageButton
+                android:id="@+id/menu_toggle_1"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:backgroundTint="@color/black"
+                android:layout_gravity="center"
+                android:translationX="-76dp"
+                android:visibility="gone"
+                android:background="@drawable/play_circle_background"
+                android:src="@drawable/ic_favorite"
+                android:contentDescription="Nút phụ" />
+            <ImageButton
+                android:id="@+id/menu_toggle_2"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:backgroundTint="@color/black"
+                android:layout_gravity="center"
+                android:translationX="-76dp"
+                android:translationY="-76dp"
+                android:visibility="gone"
+                android:background="@drawable/play_circle_background"
+                android:src="@drawable/ic_download"
+                android:contentDescription="Nút phụ" />
+            <ImageButton
+                android:id="@+id/menu_toggle_3"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:backgroundTint="@color/black"
+                android:layout_gravity="center"
+                android:translationY="-76dp"
+                android:visibility="gone"
+                android:background="@drawable/play_circle_background"
+                android:src="@drawable/ic_settings"
+                android:contentDescription="Nút phụ" />
+
+
+    </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,4 +1,4 @@
-package com.devpro.sound.data.repositoryImpl
+package com.devpro.sound.data.repository.impl
 
 import com.devpro.sound.data.mapper.toUser
 import com.devpro.sound.data.model.User

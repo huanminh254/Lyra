@@ -7,19 +7,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.devpro.sound.data.model.Song
 import com.devpro.sound.databinding.FragmentSearchBinding
 import com.devpro.sound.ui.components.SongAdapter
 import com.devpro.sound.ui.nowplaying.NowPlayingViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class SearchFragment : Fragment() {
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
-    private val viewModel by lazy {
-        ViewModelProvider(requireActivity(), NowPlayingViewModel.Factory.create(requireContext()))[NowPlayingViewModel::class.java]
-    }
+    private val viewModel: NowPlayingViewModel by activityViewModels()
+
     private lateinit var adapter: SongAdapter
     private var allSongs: List<Song> = emptyList()
 
@@ -36,7 +37,9 @@ class SearchFragment : Fragment() {
         binding.searchBack.setOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
         binding.searchInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { renderResults(s?.toString().orEmpty()) }
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                renderResults(s?.toString().orEmpty())
+            }
             override fun afterTextChanged(s: Editable?) = Unit
         })
         viewModel.uiState.observe(viewLifecycleOwner) { state ->

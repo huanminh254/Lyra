@@ -5,6 +5,7 @@ import com.devpro.sound.data.model.Song
 data class NowPlayingUiState(
     val song: Song? = null,
     val songs: List<Song> = emptyList(),
+    val favoriteSongs: List<Song> = emptyList(),
     val isBuffering: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,

@@ -1,7 +1,11 @@
 package com.devpro.sound
 
+import android.animation.ValueAnimator
 import android.os.Bundle
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.devpro.sound.databinding.ActivityMainBinding
@@ -9,60 +13,282 @@ import com.devpro.sound.ui.discover.DiscoverFragment
 import com.devpro.sound.ui.downloads.DownloadsFragment
 import com.devpro.sound.ui.favorites.FavoritesFragment
 import com.devpro.sound.ui.search.SearchFragment
-import com.devpro.sound.ui.settings.SettingsFragment
+import com.devpro.sound.ui.auth.LoginFragment
 import com.devpro.sound.ui.nowplaying.NowPlayingFragment
+import dagger.hilt.android.AndroidEntryPoint
+import android.view.animation.OvershootInterpolator
+import com.devpro.sound.ui.nowplaying.NowPlayingViewModel
+import javax.inject.Inject
+import kotlin.math.hypot
+import androidx.activity.viewModels
+import com.devpro.sound.ui.components.MiniPlayerBinder
 
-class MainActivity : AppCompatActivity() {
+
+@AndroidEntryPoint
+class MainActivity () : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    private var hoveredButton: View? = null
+    private var currentTab = NavigationTab.DISCOVER
+    private lateinit var radialItems: MutableList<RadialItem>
+    private val viewModel: NowPlayingViewModel by viewModels()
+    private lateinit var miniPlayer: MiniPlayerBinder
+    private var miniPlayerMarginAnimator: ValueAnimator? = null
+    private enum class NavigationTab(val iconRes: Int) {
+        DISCOVER(R.drawable.ic_music_note),
+        FAVORITES(R.drawable.ic_favorite),
+        DOWNLOADS(R.drawable.ic_download),
+        SETTINGS(R.drawable.ic_settings)
+    }
+
+    private data class RadialItem(
+        val button: ImageButton,
+        var tab: NavigationTab
+    )
+
+    private data class BubblePosition(
+        val button: View,
+        val x: Float,
+        val y: Float
+    )
+
+    private val showMenuRunnable = Runnable {
+        expandRadialMenu()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.bottomNavigation.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_discover -> showRoot(DiscoverFragment(), R.id.nav_discover)
-                R.id.nav_favorites -> showRoot(FavoritesFragment(), R.id.nav_favorites)
-                R.id.nav_downloads -> showRoot(DownloadsFragment(), R.id.nav_downloads)
-                R.id.nav_settings -> showRoot(SettingsFragment(), R.id.nav_settings)
-                else -> false
+        radialItems = mutableListOf(
+            RadialItem(binding.menuToggle1, NavigationTab.FAVORITES),
+            RadialItem(binding.menuToggle2, NavigationTab.DOWNLOADS),
+            RadialItem(binding.menuToggle3, NavigationTab.SETTINGS)
+        )
+
+        binding.menuToggleMain.setOnTouchListener { view, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    view.postDelayed(showMenuRunnable, 200L)
+                    true
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    if (isRadialMenuVisible()) {
+                        updateHoveredButton(event.rawX, event.rawY)
+                    }
+                    true
+                }
+
+                MotionEvent.ACTION_UP,
+                MotionEvent.ACTION_CANCEL -> {
+                    view.removeCallbacks(showMenuRunnable)
+                    if (event.actionMasked == MotionEvent.ACTION_UP && isRadialMenuVisible()) {
+                        hoveredButton?.let { swapTabAndNavigate(it) }
+                    }
+                    resetHoveredButton()
+                    collapseRadialMenu()
+                    true
+                }
+
+                else -> true
             }
         }
+
         supportFragmentManager.addOnBackStackChangedListener { updateNavigationVisibility() }
+
         if (savedInstanceState == null) {
-            binding.bottomNavigation.selectedItemId = R.id.nav_discover
+            showRoot(DiscoverFragment())
+        }
+        miniPlayer = MiniPlayerBinder(
+            root = binding.mainMiniPlayer.root,
+            onOpen = {
+                showRoot(NowPlayingFragment())
+            },
+            onPlayPause = viewModel::onPlayPauseClick,
+            onFavorite = viewModel::toggleFavorite
+        )
+        viewModel.uiState.observe(this){state ->
+            miniPlayer.render(
+                song = state.song,
+                isPlaying = state.isPlaying,
+                isFavorite = state.song?.let { song ->
+                    state.favoriteSongs.any { favorite -> favorite.id == song.id }
+                } == true
+            )
         }
     }
 
-    fun openSearch() {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, SearchFragment())
-            .addToBackStack("search")
-            .commit()
-        binding.bottomNavigation.visibility = View.GONE
-    }
-
-    fun openNowPlaying() {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, NowPlayingFragment())
-            .addToBackStack("now_playing")
-            .commit()
-        binding.bottomNavigation.visibility = View.GONE
-    }
-
-    private fun showRoot(fragment: Fragment, selectedItemId: Int): Boolean {
+    private fun showRoot(fragment: Fragment): Boolean {
         supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .commit()
-        binding.bottomNavigation.selectedItemId = selectedItemId
         binding.bottomNavigation.visibility = View.VISIBLE
         return true
     }
 
+    private fun expandRadialMenu() {
+        animateMiniPlayerMargin(expanded = true)
+        bubblePositions().forEach { item ->
+            item.button.animate().cancel()
+            item.button.visibility = View.VISIBLE
+            item.button.alpha = 0f
+            item.button.scaleX = 0.75f
+            item.button.scaleY = 0.75f
+            item.button.translationX = 0f
+            item.button.translationY = 0f
+            item.button.animate()
+                .translationX(dp(item.x))
+                .translationY(dp(item.y))
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(220L)
+                .setInterpolator(OvershootInterpolator(1.1f))
+                .start()
+        }
+    }
+
+    private fun collapseRadialMenu() {
+        animateMiniPlayerMargin(expanded = false)
+        bubblePositions().forEach { item ->
+            item.button.animate().cancel()
+            item.button.animate()
+                .translationX(0f)
+                .translationY(0f)
+                .alpha(0f)
+                .scaleX(0.75f)
+                .scaleY(0.75f)
+                .setDuration(120L)
+                .withEndAction {
+                    item.button.visibility = View.GONE
+                    item.button.alpha = 1f
+                    item.button.scaleX = 1f
+                    item.button.scaleY = 1f
+                    item.button.translationX = dp(item.x)
+                    item.button.translationY = dp(item.y)
+                }
+                .start()
+        }
+    }
+
+    private fun isRadialMenuVisible(): Boolean {
+        return binding.menuToggle1.visibility == View.VISIBLE
+    }
+
+    private fun swapTabAndNavigate(selectedButton: View) {
+        val selectedItem = radialItems.firstOrNull { it.button === selectedButton }
+            ?: return
+        val previousTab = currentTab
+
+        currentTab = selectedItem.tab
+        selectedItem.tab = previousTab
+
+        binding.menuToggleMain.setImageResource(currentTab.iconRes)
+        selectedItem.button.setImageResource(selectedItem.tab.iconRes)
+        showRoot(fragmentFor(currentTab))
+    }
+
+    private fun fragmentFor(tab: NavigationTab): Fragment {
+        return when (tab) {
+            NavigationTab.DISCOVER -> DiscoverFragment()
+            NavigationTab.FAVORITES -> FavoritesFragment()
+            NavigationTab.DOWNLOADS -> DownloadsFragment()
+            NavigationTab.SETTINGS -> LoginFragment()
+        }
+    }
+
+    private fun bubblePositions(): List<BubblePosition> {
+        return listOf(
+            BubblePosition(binding.menuToggle1, -76f, 0f),
+            BubblePosition(binding.menuToggle2, -76f, -76f),
+            BubblePosition(binding.menuToggle3, 0f, -76f)
+        )
+    }
+
+    private fun updateHoveredButton(rawX: Float, rawY: Float) {
+        val newHoveredButton = bubblePositions()
+            .firstOrNull { item -> isPointInsideBase(item, rawX, rawY) }
+            ?.button
+
+        if (newHoveredButton === hoveredButton) return
+
+        val oldHoveredButton = hoveredButton
+        val oldHoveredPosition = bubblePositions().firstOrNull { it.button === oldHoveredButton }
+
+        oldHoveredButton?.animate()
+            ?.scaleX(1f)
+            ?.scaleY(1f)
+            ?.translationX(oldHoveredPosition?.let { dp(it.x) } ?: 0f)
+            ?.translationY(oldHoveredPosition?.let { dp(it.y) } ?: 0f)
+            ?.setDuration(100L)
+            ?.start()
+
+        newHoveredButton?.animate()
+            ?.scaleX(1.2f)
+            ?.scaleY(1.2f)
+            ?.setDuration(100L)
+            ?.start()
+
+        hoveredButton = newHoveredButton
+    }
+
+    private fun resetHoveredButton() {
+        val oldHoveredButton = hoveredButton
+        val oldHoveredPosition = bubblePositions().firstOrNull { it.button === oldHoveredButton }
+
+        oldHoveredButton?.animate()
+            ?.scaleX(1f)
+            ?.scaleY(1f)
+            ?.translationX(oldHoveredPosition?.let { dp(it.x) } ?: 0f)
+            ?.translationY(oldHoveredPosition?.let { dp(it.y) } ?: 0f)
+            ?.setDuration(100L)
+            ?.start()
+        hoveredButton = null
+    }
+
+    private fun isPointInsideBase(item: BubblePosition, rawX: Float, rawY: Float): Boolean {
+        val location = IntArray(2)
+        binding.menuToggleMain.getLocationOnScreen(location)
+
+        val centerX = location[0] + binding.menuToggleMain.width / 2f + dp(item.x)
+        val centerY = location[1] + binding.menuToggleMain.height / 2f + dp(item.y)
+        val hitRadius = dp(34f)
+        val distanceX = rawX - centerX
+        val distanceY = rawY - centerY
+
+        return hypot(distanceX.toDouble(), distanceY.toDouble()) <= hitRadius
+    }
+
+    private fun dp(value: Float): Float {
+        return value * resources.displayMetrics.density
+    }
+
+    private fun animateMiniPlayerMargin(expanded: Boolean) {
+        val miniPlayer = binding.mainMiniPlayer.root
+        val layoutParams = miniPlayer.layoutParams as? ViewGroup.MarginLayoutParams
+            ?: return
+        val targetMarginEnd = dp(if (expanded) 80f else 5f).toInt()
+        miniPlayerMarginAnimator?.cancel()
+        miniPlayerMarginAnimator = ValueAnimator.ofInt(
+            layoutParams.marginEnd,
+            targetMarginEnd
+        ).apply {
+            duration = if (expanded) 220L else 120L
+            addUpdateListener { animator ->
+                val updatedParams = miniPlayer.layoutParams as ViewGroup.MarginLayoutParams
+                updatedParams.marginEnd = animator.animatedValue as Int
+                miniPlayer.layoutParams = updatedParams
+            }
+            start()
+        }
+    }
+
     private fun updateNavigationVisibility() {
         val current = supportFragmentManager.findFragmentById(R.id.fragment_container)
-        binding.bottomNavigation.visibility = if (current is SearchFragment || current is NowPlayingFragment) View.GONE else View.VISIBLE
+        binding.bottomNavigation.visibility = if (
+            current is SearchFragment || current is NowPlayingFragment
+        ) View.GONE else View.VISIBLE
     }
 }

@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt.android)
 }
 
 android {
@@ -52,9 +54,12 @@ dependencies {
     implementation(libs.coil.network.okhttp)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.storage)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.material)
     implementation(libs.androidx.activity)
+    implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.constraintlayout)
 
     testImplementation(libs.junit)

@@ -6,16 +6,16 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import com.devpro.sound.databinding.FragmentNowPlayingBinding
 import com.devpro.sound.ui.components.loadSongCover
+import dagger.hilt.android.AndroidEntryPoint
+import androidx.fragment.app.activityViewModels
 
+@AndroidEntryPoint
 class NowPlayingFragment : Fragment() {
     private var _binding: FragmentNowPlayingBinding? = null
     private val binding get() = _binding!!
-    private val viewModel by lazy {
-        ViewModelProvider(requireActivity(), NowPlayingViewModel.Factory.create(requireContext()))[NowPlayingViewModel::class.java]
-    }
+    private val viewModel: NowPlayingViewModel by activityViewModels()
     private var initialTouchX = 0f
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {

@@ -8,15 +8,18 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
 import com.devpro.sound.data.model.Song
 import com.devpro.sound.data.repository.SongRepository
-import com.devpro.sound.data.repositoryImpl.SongRepositoryImpl
+import com.devpro.sound.data.repository.impl.SongRepositoryImpl
 import com.devpro.sound.player.AudioPlayer
 import com.devpro.sound.player.AudioPlayerManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class NowPlayingViewModel(
+@HiltViewModel
+class NowPlayingViewModel @Inject constructor(
     private val songRepository: SongRepository,
     private val audioPlayer: AudioPlayer
 ) : ViewModel() {
@@ -31,35 +34,38 @@ class NowPlayingViewModel(
         observePlayerState()
         loadSongs()
     }
-
-    fun loadSongs() {
+    private fun loadSongs() {
         viewModelScope.launch {
-            updateState { it.copy(isLoading = true, errorMessage = null) }
-            runCatching { songRepository.getSongs() }
-                .onSuccess { songs ->
-                    playableSongs = songs.filter { !it.audioUrl.isNullOrBlank() }
-                    audioPlayer.setPlayList(playableSongs.mapNotNull { it.audioUrl })
-                    updateState {
-                        it.copy(
-                            song = playableSongs.firstOrNull() ?: songs.firstOrNull(),
-                            songs = songs,
-                            isLoading = false,
-                            errorMessage = null,
-                            isPlaying = audioPlayer.isPlaying()
-                        )
-                    }
+            runCatching {
+                songRepository.getSongs()
+            }.onSuccess { songs ->
+                playableSongs = songs.filter {
+                    !it.audioUrl.isNullOrBlank()
                 }
-                .onFailure { throwable ->
-                    updateState {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = throwable.message ?: "Không tải được danh sách bài hát"
-                        )
-                    }
+
+                audioPlayer.setPlayList(
+                    playableSongs.mapNotNull { it.audioUrl }
+                )
+
+                updateState {
+                    it.copy(
+                        songs = songs,
+                        song = playableSongs.firstOrNull(),
+                        isLoading = false,
+                        errorMessage = null
+                    )
                 }
+            }.onFailure { error ->
+                updateState {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = error.message
+                            ?: "Không tải được bài hát"
+                    )
+                }
+            }
         }
     }
-
     fun onPlayPauseClick() {
         val currentSong = _uiState.value?.song ?: return
         val audioUrl = currentSong.audioUrl?.takeIf { it.isNotBlank() } ?: return
@@ -79,6 +85,21 @@ class NowPlayingViewModel(
         if (index == -1) return
         audioPlayer.playAt(index)
         updateState { it.copy(song = song, isPlaying = audioPlayer.isPlaying()) }
+    }
+
+    fun toggleFavorite() {
+        val currentSong = _uiState.value?.song ?: return
+
+        updateState { state ->
+            val isFavorite = state.favoriteSongs.any { it.id == currentSong.id }
+            state.copy(
+                favoriteSongs = if (isFavorite) {
+                    state.favoriteSongs.filterNot { it.id == currentSong.id }
+                } else {
+                    state.favoriteSongs + currentSong
+                }
+            )
+        }
     }
 
     fun onSeek(progress: Float) {

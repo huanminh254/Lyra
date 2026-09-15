@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center_vertical"
-    android:minHeight="76dp"
+    android:minHeight="88dp"
     android:orientation="horizontal"
     android:paddingStart="24dp"
     android:paddingTop="8dp"
@@ -12,8 +12,10 @@
 
     <ImageView
         android:id="@+id/song_cover"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:background="@drawable/song_cover_background"
+        android:clipToOutline="true"
         android:contentDescription="Ảnh bìa"
         android:scaleType="centerCrop"
         android:src="@drawable/ic_launcher_background" />
@@ -24,15 +26,18 @@
         android:layout_marginStart="16dp"
         android:layout_weight="1"
         android:orientation="vertical">
+
         <TextView
             android:id="@+id/song_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
+            android:fontFamily="sans-serif"
             android:maxLines="1"
-            android:textColor="@color/white"
+            android:textColor="#101116"
             android:textSize="17sp"
             android:textStyle="bold" />
+
         <TextView
             android:id="@+id/song_artist"
             android:layout_width="match_parent"
@@ -40,14 +45,16 @@
             android:layout_marginTop="4dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="@color/muted_text"
+            android:textColor="#7B7B80"
             android:textSize="14sp" />
     </LinearLayout>
 
     <ImageView
         android:id="@+id/song_action"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
-        android:contentDescription="Phát"
-        android:src="@drawable/resume" />
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:contentDescription="Tùy chọn bài hát"
+        android:padding="4dp"
+        android:src="@drawable/more"
+        android:tint="#7B7B80" />
 </LinearLayout>
