@@ -13,6 +13,7 @@ data class SongEntity(
     val originalFileName: String = "",
     val sizeBytes: Long = 0L,
     val sortOrder: Long = 0L,
+    val ownerId: String = "",
     val sourceUrl: String? = null,
     val genre: String? = null,
     val year: String? = null

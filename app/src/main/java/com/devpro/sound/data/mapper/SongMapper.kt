@@ -13,6 +13,7 @@ fun SongEntity.toSong(id: String = this.id): Song {
         coverResId = null,
         audioUrl = audioUrl,
         coverUrl = coverUrl,
+        ownerId = ownerId,
         sourceUrl = sourceUrl,
         genre = genre,
         year = year
@@ -28,6 +29,7 @@ fun Song.toEntity(): SongEntity {
         duration = duration,
         audioUrl = audioUrl.orEmpty(),
         coverUrl = coverUrl.orEmpty(),
+        ownerId = ownerId,
         sourceUrl = sourceUrl,
         genre = genre,
         year = year

@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.storage)
     implementation(libs.hilt.android)
+    implementation(libs.firebase.auth)
     ksp(libs.hilt.compiler)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.material)

@@ -12,7 +12,9 @@ fun UserEntity.toUser(id: String = this.id): User {
         streamOnlyOnWifi = streamOnlyOnWifi,
         darkModeEnabled = darkModeEnabled,
         cacheSubtitle = cacheSubtitle,
-        appVersion = appVersion
+        appVersion = appVersion,
+        uploadedSongIds = uploadedSongIds,
+        favoriteSongIds = favoriteSongIds
     )
 }
 
@@ -25,6 +27,8 @@ fun User.toEntity(): UserEntity {
         streamOnlyOnWifi = streamOnlyOnWifi,
         darkModeEnabled = darkModeEnabled,
         cacheSubtitle = cacheSubtitle,
-        appVersion = appVersion
+        appVersion = appVersion,
+        uploadedSongIds = uploadedSongIds,
+        favoriteSongIds = favoriteSongIds
     )
 }

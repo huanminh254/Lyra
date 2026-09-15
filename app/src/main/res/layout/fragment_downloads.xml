@@ -21,6 +21,14 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="4dp"
         android:textColor="@color/muted_text" />
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/downloads_upload"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="12dp"
+        android:text="Đăng bài hát"
+        android:textAllCaps="false" />
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/downloads_list"
         android:layout_width="match_parent"

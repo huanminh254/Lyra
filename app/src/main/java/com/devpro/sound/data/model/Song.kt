@@ -11,6 +11,7 @@ data class Song(
     val coverPath: String? = null,
     val audioUrl: String? = null,
     val coverUrl: String? = null,
+    val ownerId: String = "",
     val sourceUrl: String? = null,
     val genre: String? = null,
     val year: String? = null

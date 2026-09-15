@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/now_playing_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -29,9 +30,12 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="@android:color/transparent"
+                android:scaleType="centerInside"
                 android:contentDescription="Quay lại"
                 android:src="@drawable/back"
-                android:tint="@color/white" />
+                app:tint="@color/white"
+                />
+
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -44,10 +48,12 @@
             <ImageButton
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="@android:color/transparent"
+                android:background="@null"
                 android:contentDescription="Thêm"
                 android:src="@drawable/more"
-                android:tint="@color/white" />
+                android:scaleType="centerInside"
+                app:tint="@color/white"
+                />
         </LinearLayout>
         <Space
             android:layout_width="match_parent"
@@ -87,26 +93,35 @@
                 android:id="@+id/now_playing_previous"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
-                android:background="@android:color/transparent"
+                android:background="@null"
+                android:scaleType="centerInside"
                 android:contentDescription="Bài trước"
+                app:tint="@color/white"
+                android:layout_marginEnd="10dp"
                 android:src="@drawable/rewind"
-                android:tint="@color/white" />
+                />
             <ImageButton
                 android:id="@+id/now_playing_play_pause"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
-                android:background="@android:color/transparent"
+                android:background="@null"
+                android:scaleType="centerInside"
+                app:tint="@color/white"
+                android:layout_marginEnd="10dp"
                 android:contentDescription="Phát hoặc tạm dừng"
                 android:src="@drawable/resume"
-                android:tint="@color/white" />
+                />
             <ImageButton
                 android:id="@+id/now_playing_next"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
-                android:background="@android:color/transparent"
+                android:background="@null"
+                android:scaleType="centerInside"
+                app:tint="@color/white"
+
                 android:contentDescription="Bài tiếp theo"
                 android:src="@drawable/fastforwad"
-                android:tint="@color/white" />
+                />
         </LinearLayout>
         <TextView
             android:id="@+id/now_playing_time"

@@ -1,0 +1,24 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    match /users/{userId}/songs/{songId}/{fileName} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.size < 50 * 1024 * 1024
+        && (
+          (fileName == 'audio'
+            && request.resource.contentType.matches('audio/.*'))
+          ||
+          (fileName == 'cover'
+            && request.resource.contentType.matches('image/.*'))
+        );
+      allow delete: if signedIn() && request.auth.uid == userId;
+    }
+  }
+}

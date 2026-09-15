@@ -1,7 +1,7 @@
 package com.devpro.sound.data.repository
 
-import com.devpro.sound.data.model.User
-
 interface UserRepository {
-    suspend fun getCurrentUser(): User
+    suspend fun getFavoriteSongIds(): List<String>
+    suspend fun addFavoriteSong(songId: String)
+    suspend fun removeFavoriteSong(songId: String)
 }

@@ -57,7 +57,7 @@
                 android:contentDescription="Phát bài hát"
                 android:scaleType="centerInside"
                 android:src="@drawable/resume"
-                android:tint="@color/white"
+                app:tint="@color/white"
                 />
             <TextView
                 android:id="@+id/featured_play_count"

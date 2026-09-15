@@ -8,5 +8,7 @@ data class User(
     val streamOnlyOnWifi: Boolean,
     val darkModeEnabled: Boolean,
     val cacheSubtitle: String,
-    val appVersion: String
+    val appVersion: String,
+    val uploadedSongIds: List<String> = emptyList(),
+    val favoriteSongIds: List<String> = emptyList()
 )

@@ -6,8 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.devpro.sound.R
 import com.devpro.sound.databinding.FragmentDownloadsBinding
 import com.devpro.sound.ui.components.SongAdapter
 import com.devpro.sound.ui.nowplaying.NowPlayingViewModel
@@ -29,6 +29,13 @@ class DownloadsFragment : Fragment() {
         adapter = SongAdapter(viewModel::onSongClick)
         binding.downloadsList.layoutManager = LinearLayoutManager(requireContext())
         binding.downloadsList.adapter = adapter
+        binding.downloadsUpload.setOnClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.fragment_container, UploadSongFragment())
+                .addToBackStack(null)
+                .commit()
+        }
         viewModel.uiState.observe(viewLifecycleOwner) { state ->
             val songs = state.songs.take(16)
             adapter.submitList(songs)

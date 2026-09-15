@@ -2,6 +2,7 @@ package com.devpro.sound.ui.nowplaying
 
 import com.devpro.sound.data.model.Song
 import com.devpro.sound.data.repository.SongRepository
+import com.devpro.sound.data.repository.UserRepository
 import com.devpro.sound.player.AudioPlayer
 import com.devpro.sound.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -58,7 +59,8 @@ class NowPlayingViewModelTest {
     private fun createViewModel(song: Song = defaultSong()): NowPlayingViewModel {
         return NowPlayingViewModel(
             songRepository = FakeSongRepository(song),
-            audioPlayer = FakeAudioPlayer()
+            audioPlayer = FakeAudioPlayer(),
+            userRepository = FakeUserRepository()
         )
     }
 
@@ -73,7 +75,12 @@ class NowPlayingViewModelTest {
 
     private class FakeSongRepository(private val song: Song) : SongRepository {
         override suspend fun getSongs(): List<Song> = listOf(song)
-        override suspend fun getCurrentSong(): Song = song
+    }
+
+    private class FakeUserRepository : UserRepository {
+        override suspend fun getFavoriteSongIds(): List<String> = emptyList()
+        override suspend fun addFavoriteSong(songId: String) = Unit
+        override suspend fun removeFavoriteSong(songId: String) = Unit
     }
 
     private class FakeAudioPlayer : AudioPlayer {

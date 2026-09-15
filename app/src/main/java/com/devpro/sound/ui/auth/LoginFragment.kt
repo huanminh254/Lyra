@@ -4,15 +4,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
-import androidx.core.view.WindowInsetsControllerCompat
+import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.devpro.sound.R
+import androidx.fragment.app.viewModels
+import com.devpro.sound.data.remote.model.LoginRequest
 import com.devpro.sound.databinding.FragmentLoginBinding
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class LoginFragment : Fragment() {
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
+    private val viewModel: LoginViewModel by viewModels()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentLoginBinding.inflate(inflater, container, false)
@@ -20,31 +23,43 @@ class LoginFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        setLightStatusBar()
-    }
+        super.onViewCreated(view, savedInstanceState)
+        binding.loginSubmit.setOnClickListener {
+            val email = binding.loginEmail.text?.toString()?.trim().orEmpty()
+            val password = binding.loginPassword.text?.toString().orEmpty()
+            if (email.isBlank()) {
+                binding.loginEmailLayout.error = "Vui lòng nhập email"
+                return@setOnClickListener
+            }
 
-    override fun onResume() {
-        super.onResume()
-        setLightStatusBar()
-    }
+            if (password.isBlank()) {
+                binding.loginPasswordLayout.error = "Vui lòng nhập mật khẩu"
+                return@setOnClickListener
+            }
 
-    override fun onPause() {
-        super.onPause()
-        requireActivity().window.statusBarColor =
-            ContextCompat.getColor(requireContext(), R.color.screen_background)
-        WindowInsetsControllerCompat(
-            requireActivity().window,
-            requireActivity().window.decorView
-        ).isAppearanceLightStatusBars = false
-    }
+            viewModel.login(
+                LoginRequest(
+                    email = email,
+                    password = password
+                )
+            )
+        }
 
-    private fun setLightStatusBar() {
-        requireActivity().window.statusBarColor =
-            ContextCompat.getColor(requireContext(), R.color.login_background)
-        WindowInsetsControllerCompat(
-            requireActivity().window,
-            requireActivity().window.decorView
-        ).isAppearanceLightStatusBars = true
+        viewModel.uiState.observe(viewLifecycleOwner) { state ->
+            binding.loginSubmit.isEnabled = !state.isLoading
+
+            if (state.isSuccess) {
+                // MainActivity's FirebaseAuth listener opens Discover after login.
+            }
+
+            if (state.message.isNotBlank()) {
+                Toast.makeText(
+                    requireContext(),
+                    state.message,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
     }
 
     override fun onDestroyView() {

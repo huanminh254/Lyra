@@ -15,7 +15,4 @@ class SongRepositoryImpl(
         }
     }
 
-    override suspend fun getCurrentSong(): Song {
-        return getSongs().first()
-    }
 }

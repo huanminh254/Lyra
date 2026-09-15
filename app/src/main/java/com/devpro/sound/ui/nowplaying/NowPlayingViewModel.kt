@@ -3,14 +3,12 @@ package com.devpro.sound.ui.nowplaying
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
 import com.devpro.sound.data.model.Song
 import com.devpro.sound.data.repository.SongRepository
-import com.devpro.sound.data.repository.impl.SongRepositoryImpl
+import com.devpro.sound.data.repository.UserRepository
 import com.devpro.sound.player.AudioPlayer
-import com.devpro.sound.player.AudioPlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -21,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class NowPlayingViewModel @Inject constructor(
     private val songRepository: SongRepository,
-    private val audioPlayer: AudioPlayer
+    private val audioPlayer: AudioPlayer,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableLiveData(NowPlayingUiState(isLoading = true))
@@ -39,6 +38,10 @@ class NowPlayingViewModel @Inject constructor(
             runCatching {
                 songRepository.getSongs()
             }.onSuccess { songs ->
+                val favoriteSongIds = runCatching {
+                    userRepository.getFavoriteSongIds()
+                }.getOrDefault(emptyList())
+
                 playableSongs = songs.filter {
                     !it.audioUrl.isNullOrBlank()
                 }
@@ -51,6 +54,7 @@ class NowPlayingViewModel @Inject constructor(
                     it.copy(
                         songs = songs,
                         song = playableSongs.firstOrNull(),
+                        favoriteSongs = songs.filter { it.id in favoriteSongIds },
                         isLoading = false,
                         errorMessage = null
                     )
@@ -65,6 +69,10 @@ class NowPlayingViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun refreshSongs() {
+        loadSongs()
     }
     fun onPlayPauseClick() {
         val currentSong = _uiState.value?.song ?: return
@@ -89,16 +97,39 @@ class NowPlayingViewModel @Inject constructor(
 
     fun toggleFavorite() {
         val currentSong = _uiState.value?.song ?: return
+        val wasFavorite = _uiState.value?.favoriteSongs
+            ?.any { it.id == currentSong.id } == true
+        val updatedFavorites = if (wasFavorite) {
+            _uiState.value?.favoriteSongs.orEmpty()
+                .filterNot { it.id == currentSong.id }
+        } else {
+            _uiState.value?.favoriteSongs.orEmpty() + currentSong
+        }
 
         updateState { state ->
-            val isFavorite = state.favoriteSongs.any { it.id == currentSong.id }
-            state.copy(
-                favoriteSongs = if (isFavorite) {
-                    state.favoriteSongs.filterNot { it.id == currentSong.id }
+            state.copy(favoriteSongs = updatedFavorites, errorMessage = null)
+        }
+
+        viewModelScope.launch {
+            runCatching {
+                if (wasFavorite) {
+                    userRepository.removeFavoriteSong(currentSong.id)
                 } else {
-                    state.favoriteSongs + currentSong
+                    userRepository.addFavoriteSong(currentSong.id)
                 }
-            )
+            }.onFailure { exception ->
+                updateState { state ->
+                    state.copy(
+                        favoriteSongs = if (wasFavorite) {
+                            state.favoriteSongs + currentSong
+                        } else {
+                            state.favoriteSongs.filterNot { it.id == currentSong.id }
+                        },
+                        errorMessage = exception.message
+                            ?: "Không thể cập nhật yêu thích"
+                    )
+                }
+            }
         }
     }
 
@@ -172,22 +203,4 @@ class NowPlayingViewModel @Inject constructor(
         _uiState.value = _uiState.value?.let(transform)
     }
 
-    class Factory(
-        private val repository: SongRepository,
-        private val player: AudioPlayer
-    ) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return NowPlayingViewModel(repository, player) as T
-        }
-
-        companion object {
-            fun create(context: android.content.Context): Factory {
-                return Factory(
-                    repository = SongRepositoryImpl(),
-                    player = AudioPlayerManager(context.applicationContext)
-                )
-            }
-        }
-    }
 }

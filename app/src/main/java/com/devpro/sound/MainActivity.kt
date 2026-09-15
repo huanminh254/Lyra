@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import com.devpro.sound.databinding.ActivityMainBinding
 import com.devpro.sound.ui.discover.DiscoverFragment
 import com.devpro.sound.ui.downloads.DownloadsFragment
+import com.devpro.sound.ui.downloads.UploadSongFragment
 import com.devpro.sound.ui.favorites.FavoritesFragment
 import com.devpro.sound.ui.search.SearchFragment
 import com.devpro.sound.ui.auth.LoginFragment
@@ -22,11 +23,14 @@ import javax.inject.Inject
 import kotlin.math.hypot
 import androidx.activity.viewModels
 import com.devpro.sound.ui.components.MiniPlayerBinder
+import com.google.firebase.auth.FirebaseAuth
 
 
 @AndroidEntryPoint
 class MainActivity () : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    @Inject
+    lateinit var firebaseAuth: FirebaseAuth
     private var hoveredButton: View? = null
     private var currentTab = NavigationTab.DISCOVER
     private lateinit var radialItems: MutableList<RadialItem>
@@ -36,8 +40,7 @@ class MainActivity () : AppCompatActivity() {
     private enum class NavigationTab(val iconRes: Int) {
         DISCOVER(R.drawable.ic_music_note),
         FAVORITES(R.drawable.ic_favorite),
-        DOWNLOADS(R.drawable.ic_download),
-        SETTINGS(R.drawable.ic_settings)
+        DOWNLOADS(R.drawable.ic_download)
     }
 
     private data class RadialItem(
@@ -55,6 +58,19 @@ class MainActivity () : AppCompatActivity() {
         expandRadialMenu()
     }
 
+    private val authStateListener = FirebaseAuth.AuthStateListener { auth ->
+        if (auth.currentUser == null) {
+            showRoot(LoginFragment())
+        } else {
+            val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+            if (currentFragment is LoginFragment) {
+                showRoot(DiscoverFragment())
+            } else {
+                updateNavigationVisibility()
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -62,14 +78,17 @@ class MainActivity () : AppCompatActivity() {
 
         radialItems = mutableListOf(
             RadialItem(binding.menuToggle1, NavigationTab.FAVORITES),
-            RadialItem(binding.menuToggle2, NavigationTab.DOWNLOADS),
-            RadialItem(binding.menuToggle3, NavigationTab.SETTINGS)
+            RadialItem(binding.menuToggle2, NavigationTab.DOWNLOADS)
         )
 
         binding.menuToggleMain.setOnTouchListener { view, event ->
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
-                    view.postDelayed(showMenuRunnable, 200L)
+                    if (!isAuthenticated()) {
+                        showRoot(LoginFragment())
+                    } else {
+                        view.postDelayed(showMenuRunnable, 200L)
+                    }
                     true
                 }
 
@@ -98,7 +117,9 @@ class MainActivity () : AppCompatActivity() {
         supportFragmentManager.addOnBackStackChangedListener { updateNavigationVisibility() }
 
         if (savedInstanceState == null) {
-            showRoot(DiscoverFragment())
+            showRoot(
+                if (isAuthenticated()) DiscoverFragment() else LoginFragment()
+            )
         }
         miniPlayer = MiniPlayerBinder(
             root = binding.mainMiniPlayer.root,
@@ -116,15 +137,40 @@ class MainActivity () : AppCompatActivity() {
                     state.favoriteSongs.any { favorite -> favorite.id == song.id }
                 } == true
             )
+            updateMiniPlayerVisibility()
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        firebaseAuth.addAuthStateListener(authStateListener)
+    }
+
+    override fun onStop() {
+        firebaseAuth.removeAuthStateListener(authStateListener)
+        super.onStop()
+    }
+
     private fun showRoot(fragment: Fragment): Boolean {
+        if (!isAuthenticated() && fragment !is LoginFragment) {
+            return showRoot(LoginFragment())
+        }
+
+        if (isAuthenticated() && fragment is LoginFragment) {
+            return showRoot(DiscoverFragment())
+        }
+
         supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .commit()
-        binding.bottomNavigation.visibility = View.VISIBLE
+        binding.bottomNavigation.visibility = if (
+            fragment is LoginFragment ||
+                fragment is SearchFragment ||
+                fragment is NowPlayingFragment ||
+                fragment is UploadSongFragment
+        ) View.GONE else View.VISIBLE
+        updateMiniPlayerVisibility(fragment)
         return true
     }
 
@@ -178,8 +224,14 @@ class MainActivity () : AppCompatActivity() {
     }
 
     private fun swapTabAndNavigate(selectedButton: View) {
+        if (!isAuthenticated()) {
+            showRoot(LoginFragment())
+            return
+        }
+
         val selectedItem = radialItems.firstOrNull { it.button === selectedButton }
             ?: return
+
         val previousTab = currentTab
 
         currentTab = selectedItem.tab
@@ -195,15 +247,13 @@ class MainActivity () : AppCompatActivity() {
             NavigationTab.DISCOVER -> DiscoverFragment()
             NavigationTab.FAVORITES -> FavoritesFragment()
             NavigationTab.DOWNLOADS -> DownloadsFragment()
-            NavigationTab.SETTINGS -> LoginFragment()
         }
     }
 
     private fun bubblePositions(): List<BubblePosition> {
         return listOf(
             BubblePosition(binding.menuToggle1, -76f, 0f),
-            BubblePosition(binding.menuToggle2, -76f, -76f),
-            BubblePosition(binding.menuToggle3, 0f, -76f)
+            BubblePosition(binding.menuToggle2, -76f, -76f)
         )
     }
 
@@ -286,9 +336,39 @@ class MainActivity () : AppCompatActivity() {
     }
 
     private fun updateNavigationVisibility() {
+        if (!isAuthenticated()) {
+            binding.bottomNavigation.visibility = View.GONE
+            updateMiniPlayerVisibility()
+            return
+        }
+
         val current = supportFragmentManager.findFragmentById(R.id.fragment_container)
         binding.bottomNavigation.visibility = if (
-            current is SearchFragment || current is NowPlayingFragment
+            current is SearchFragment ||
+                current is NowPlayingFragment ||
+                current is UploadSongFragment
         ) View.GONE else View.VISIBLE
+        updateMiniPlayerVisibility()
+    }
+
+    private fun updateMiniPlayerVisibility(fragment: Fragment? = null) {
+        if (!::miniPlayer.isInitialized) return
+
+        val current = fragment
+            ?: supportFragmentManager.findFragmentById(R.id.fragment_container)
+        val canShow = isAuthenticated() && (
+            current is DiscoverFragment ||
+                current is FavoritesFragment ||
+                current is DownloadsFragment ||
+                current is SearchFragment
+            )
+        val hasSong = viewModel.uiState.value?.song != null
+
+        binding.mainMiniPlayer.root.visibility =
+            if (canShow && hasSong) View.VISIBLE else View.GONE
+    }
+
+    private fun isAuthenticated(): Boolean {
+        return firebaseAuth.currentUser != null
     }
 }

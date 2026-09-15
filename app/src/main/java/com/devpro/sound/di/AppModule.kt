@@ -6,7 +6,18 @@ import com.devpro.sound.data.repository.impl.SongRepositoryImpl
 import com.devpro.sound.player.AudioPlayer
 import com.devpro.sound.player.AudioPlayerManager
 import android.content.Context
+import com.devpro.sound.data.remote.datasource.AuthRemoteDataSource
+import com.devpro.sound.data.remote.datasource.UserRemoteDataSource
+import com.devpro.sound.data.remote.datasource.SongUploadRemoteDataSource
+import com.devpro.sound.data.repository.UserRepository
+import com.devpro.sound.data.repository.impl.UserRepositoryImpl
+import com.devpro.sound.data.repository.AuthRepository
+import com.devpro.sound.data.repository.impl.AuthRepositoryImpl
+import com.devpro.sound.data.repository.UploadSongRepository
+import com.devpro.sound.data.repository.impl.UploadSongRepositoryImpl
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,8 +30,19 @@ import javax.inject.Singleton
 object AppModule {
     @Provides
     @Singleton
+    fun provideFirebaseAuth(): FirebaseAuth{
+        return FirebaseAuth.getInstance()
+    }
+    @Provides
+    @Singleton
     fun provideFirestore(): FirebaseFirestore{
         return FirebaseFirestore.getInstance()
+    }
+
+    @Provides
+    @Singleton
+    fun provideFirebaseStorage(): FirebaseStorage {
+        return FirebaseStorage.getInstance()
     }
     @Provides
     @Singleton
@@ -36,5 +58,52 @@ object AppModule {
     @Singleton
     fun provideAudioPlayer(@ApplicationContext context: Context): AudioPlayer{
         return AudioPlayerManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAuthRemoteDataSource(
+        firebaseAuth: FirebaseAuth
+    ): AuthRemoteDataSource {
+        return AuthRemoteDataSource(firebaseAuth)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAuthRepository(
+        dataSource: AuthRemoteDataSource
+    ): AuthRepository {
+        return AuthRepositoryImpl(dataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSongUploadRemoteDataSource(
+        firestore: FirebaseFirestore,
+        storage: FirebaseStorage,
+        firebaseAuth: FirebaseAuth
+    ): SongUploadRemoteDataSource {
+        return SongUploadRemoteDataSource(firestore, storage, firebaseAuth)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUploadSongRepository(
+        dataSource: SongUploadRemoteDataSource
+    ): UploadSongRepository {
+        return UploadSongRepositoryImpl(dataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserRemoteDataSource(
+        firestore: FirebaseFirestore, firebaseAuth: FirebaseAuth
+    ) : UserRemoteDataSource{
+        return UserRemoteDataSource(firestore, firebaseAuth)
+    }
+    @Provides
+    @Singleton
+    fun provideUserRepository(dataSource: UserRemoteDataSource): UserRepository{
+        return UserRepositoryImpl(dataSource)
     }
 }
