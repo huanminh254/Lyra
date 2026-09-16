@@ -12,16 +12,41 @@
     android:layout_marginBottom="16dp"
     android:paddingEnd="12dp">
 
-    <ImageButton
-        android:id="@+id/mini_play_pause"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:background="@android:color/transparent"
-        android:backgroundTint="@android:color/transparent"
-        android:contentDescription="Phát bài hát"
-        android:scaleType="centerInside"
-        android:src="@drawable/resume"
-        app:tint="@color/white" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="55dp"
+        android:layout_height="55dp">
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/mini_progress"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:clickable="false"
+            android:focusable="false"
+            android:max="1000"
+            android:progress="0"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:indicatorColor="@color/mini_progress_blue"
+            app:indicatorSize="55dp"
+            app:trackColor="@color/mini_progress_track"
+            app:trackThickness="3dp" />
+
+        <ImageButton
+            android:id="@+id/mini_play_pause"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@android:color/transparent"
+            android:backgroundTint="@android:color/transparent"
+            android:contentDescription="Phát bài hát"
+            android:scaleType="centerInside"
+            android:src="@drawable/resume"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:tint="@color/white" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
         android:layout_width="0dp"

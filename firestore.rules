@@ -33,7 +33,24 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.ownerId == request.auth.uid;
       allow update, delete: if signedIn()
-        && resource.data.ownerId == request.auth.uid;
+        && (
+          resource.data.ownerId == request.auth.uid
+          || (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'viewCount'
+            ])
+            && request.resource.data.get('viewCount', 0)
+              == resource.data.get('viewCount', 0) + 1
+          )
+        );
+
+      match /viewers/{userId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.keys().hasOnly(['userId', 'viewedAt']);
+        allow update, delete: if false;
+      }
     }
   }
 }

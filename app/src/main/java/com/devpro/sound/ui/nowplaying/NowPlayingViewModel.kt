@@ -28,6 +28,9 @@ class NowPlayingViewModel @Inject constructor(
 
     private var playableSongs: List<Song> = emptyList()
     private var progressJob: Job? = null
+    private val listenedMsBySong = mutableMapOf<String, Long>()
+    private val recordedViewSongIds = mutableSetOf<String>()
+    private val pendingViewSongIds = mutableSetOf<String>()
 
     init {
         observePlayerState()
@@ -93,6 +96,14 @@ class NowPlayingViewModel @Inject constructor(
         if (index == -1) return
         audioPlayer.playAt(index)
         updateState { it.copy(song = song, isPlaying = audioPlayer.isPlaying()) }
+    }
+
+    fun onSongPlayClick(song: Song) {
+        if (_uiState.value?.song?.id == song.id) {
+            onPlayPauseClick()
+        } else {
+            onSongClick(song)
+        }
     }
 
     fun toggleFavorite() {
@@ -174,9 +185,30 @@ class NowPlayingViewModel @Inject constructor(
     private fun startProgressUpdates() {
         progressJob?.cancel()
         progressJob = viewModelScope.launch {
+            var lastSongId = _uiState.value?.song?.id
+            var lastPositionMs = audioPlayer.getCurrentPosition()
+
             while (isActive && audioPlayer.isPlaying()) {
                 val currentPosition = audioPlayer.getCurrentPosition()
                 val duration = audioPlayer.getDuration()
+                val currentSongId = _uiState.value?.song?.id
+
+                if (currentSongId != null && currentSongId == lastSongId) {
+                    val positionDeltaMs = currentPosition - lastPositionMs
+                    val listenedMs = if (positionDeltaMs in 0L..1_500L) {
+                        (listenedMsBySong[currentSongId] ?: 0L) + positionDeltaMs
+                    } else {
+                        listenedMsBySong[currentSongId] ?: 0L
+                    }
+                    listenedMsBySong[currentSongId] = listenedMs
+                    if (listenedMs >= LISTENED_MS_FOR_VIEW) {
+                        recordViewIfNeeded(currentSongId)
+                    }
+                } else {
+                    lastSongId = currentSongId
+                }
+                lastPositionMs = currentPosition
+
                 val progress = if (duration > 0) {
                     (currentPosition.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
                 } else {
@@ -194,6 +226,42 @@ class NowPlayingViewModel @Inject constructor(
         }
     }
 
+    private fun recordViewIfNeeded(songId: String) {
+        if (songId in recordedViewSongIds || !pendingViewSongIds.add(songId)) return
+
+        viewModelScope.launch {
+            runCatching {
+                songRepository.recordView(songId)
+            }.onSuccess { wasCounted ->
+                recordedViewSongIds.add(songId)
+                if (wasCounted) {
+                    updateSongViewCount(songId)
+                }
+            }.also {
+                pendingViewSongIds.remove(songId)
+            }
+        }
+    }
+
+    private fun updateSongViewCount(songId: String) {
+        updateState { state ->
+            val updatedSong = state.song
+                ?.takeIf { it.id == songId }
+                ?.let { song -> song.copy(viewCount = song.viewCount + 1) }
+            val updatedSongs = state.songs.map { song ->
+                if (song.id == songId) song.copy(viewCount = song.viewCount + 1) else song
+            }
+            val updatedFavorites = state.favoriteSongs.map { song ->
+                if (song.id == songId) song.copy(viewCount = song.viewCount + 1) else song
+            }
+            state.copy(
+                song = updatedSong ?: state.song,
+                songs = updatedSongs,
+                favoriteSongs = updatedFavorites
+            )
+        }
+    }
+
     private fun syncCurrentSong() {
         val song = playableSongs.getOrNull(audioPlayer.getCurrentSongIndex()) ?: return
         updateState { it.copy(song = song, isPlaying = audioPlayer.isPlaying()) }
@@ -201,6 +269,10 @@ class NowPlayingViewModel @Inject constructor(
 
     private fun updateState(transform: (NowPlayingUiState) -> NowPlayingUiState) {
         _uiState.value = _uiState.value?.let(transform)
+    }
+
+    private companion object {
+        const val LISTENED_MS_FOR_VIEW = 15_000L
     }
 
 }

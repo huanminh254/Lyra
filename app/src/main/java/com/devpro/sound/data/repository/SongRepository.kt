@@ -4,4 +4,5 @@ import com.devpro.sound.data.model.Song
 
 interface SongRepository {
     suspend fun getSongs(): List<Song>
+    suspend fun recordView(songId: String): Boolean
 }

@@ -16,5 +16,6 @@ data class SongEntity(
     val ownerId: String = "",
     val sourceUrl: String? = null,
     val genre: String? = null,
-    val year: String? = null
+    val year: String? = null,
+    val viewCount: Long = 0L
 )

@@ -46,8 +46,11 @@ object AppModule {
     }
     @Provides
     @Singleton
-    fun provideSongRemoteDataSource(firestore: FirebaseFirestore): SongRemoteDataSource{
-        return SongRemoteDataSource(firestore)
+    fun provideSongRemoteDataSource(
+        firestore: FirebaseFirestore,
+        firebaseAuth: FirebaseAuth
+    ): SongRemoteDataSource {
+        return SongRemoteDataSource(firestore, firebaseAuth)
     }
     @Provides
     @Singleton

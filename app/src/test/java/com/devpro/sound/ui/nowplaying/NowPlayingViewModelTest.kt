@@ -75,6 +75,7 @@ class NowPlayingViewModelTest {
 
     private class FakeSongRepository(private val song: Song) : SongRepository {
         override suspend fun getSongs(): List<Song> = listOf(song)
+        override suspend fun recordView(songId: String): Boolean = false
     }
 
     private class FakeUserRepository : UserRepository {

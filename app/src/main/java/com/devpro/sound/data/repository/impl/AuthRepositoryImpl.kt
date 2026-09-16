@@ -11,4 +11,12 @@ class AuthRepositoryImpl(
     override suspend fun login(request: LoginRequest): LoginResponse {
         return authRemoteDataSource.login(request)
     }
+
+    override suspend fun register(request: LoginRequest): LoginResponse {
+        return authRemoteDataSource.register(request)
+    }
+
+    override suspend fun sendPasswordResetEmail(email: String): LoginResponse {
+        return authRemoteDataSource.sendPasswordResetEmail(email)
+    }
 }

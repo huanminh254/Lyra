@@ -13,6 +13,7 @@ import com.devpro.sound.ui.discover.DiscoverFragment
 import com.devpro.sound.ui.downloads.DownloadsFragment
 import com.devpro.sound.ui.downloads.UploadSongFragment
 import com.devpro.sound.ui.favorites.FavoritesFragment
+import com.devpro.sound.ui.account.AccountFragment
 import com.devpro.sound.ui.search.SearchFragment
 import com.devpro.sound.ui.auth.LoginFragment
 import com.devpro.sound.ui.nowplaying.NowPlayingFragment
@@ -40,7 +41,8 @@ class MainActivity () : AppCompatActivity() {
     private enum class NavigationTab(val iconRes: Int) {
         DISCOVER(R.drawable.ic_music_note),
         FAVORITES(R.drawable.ic_favorite),
-        DOWNLOADS(R.drawable.ic_download)
+        DOWNLOADS(R.drawable.ic_download),
+        ACCOUNT(R.drawable.account)
     }
 
     private data class RadialItem(
@@ -78,7 +80,8 @@ class MainActivity () : AppCompatActivity() {
 
         radialItems = mutableListOf(
             RadialItem(binding.menuToggle1, NavigationTab.FAVORITES),
-            RadialItem(binding.menuToggle2, NavigationTab.DOWNLOADS)
+            RadialItem(binding.menuToggle2, NavigationTab.DOWNLOADS),
+            RadialItem(binding.menuToggle3, NavigationTab.ACCOUNT)
         )
 
         binding.menuToggleMain.setOnTouchListener { view, event ->
@@ -135,7 +138,8 @@ class MainActivity () : AppCompatActivity() {
                 isPlaying = state.isPlaying,
                 isFavorite = state.song?.let { song ->
                     state.favoriteSongs.any { favorite -> favorite.id == song.id }
-                } == true
+                } == true,
+                progress = state.progress
             )
             updateMiniPlayerVisibility()
         }
@@ -247,13 +251,15 @@ class MainActivity () : AppCompatActivity() {
             NavigationTab.DISCOVER -> DiscoverFragment()
             NavigationTab.FAVORITES -> FavoritesFragment()
             NavigationTab.DOWNLOADS -> DownloadsFragment()
+            NavigationTab.ACCOUNT -> AccountFragment()
         }
     }
 
     private fun bubblePositions(): List<BubblePosition> {
         return listOf(
             BubblePosition(binding.menuToggle1, -76f, 0f),
-            BubblePosition(binding.menuToggle2, -76f, -76f)
+            BubblePosition(binding.menuToggle2, -76f, -76f),
+            BubblePosition(binding.menuToggle3, 0f, -76f)
         )
     }
 

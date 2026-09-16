@@ -6,7 +6,7 @@ import com.devpro.sound.data.remote.datasource.SongRemoteDataSource
 import com.devpro.sound.data.repository.SongRepository
 
 class SongRepositoryImpl(
-    private val songRemoteDataSource: SongRemoteDataSource = SongRemoteDataSource()
+    private val songRemoteDataSource: SongRemoteDataSource
 ) : SongRepository {
 
     override suspend fun getSongs(): List<Song> {
@@ -15,4 +15,7 @@ class SongRepositoryImpl(
         }
     }
 
+    override suspend fun recordView(songId: String): Boolean {
+        return songRemoteDataSource.recordView(songId)
+    }
 }

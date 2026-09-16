@@ -16,7 +16,8 @@ fun SongEntity.toSong(id: String = this.id): Song {
         ownerId = ownerId,
         sourceUrl = sourceUrl,
         genre = genre,
-        year = year
+        year = year,
+        viewCount = viewCount
     )
 }
 
@@ -32,6 +33,7 @@ fun Song.toEntity(): SongEntity {
         ownerId = ownerId,
         sourceUrl = sourceUrl,
         genre = genre,
-        year = year
+        year = year,
+        viewCount = viewCount
     )
 }

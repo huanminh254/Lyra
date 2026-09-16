@@ -38,42 +38,6 @@
                 app:tint="@color/black" />
         </LinearLayout>
 
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/discover_tabs"
-            android:layout_width="match_parent"
-            android:layout_height="58dp"
-            app:tabGravity="fill"
-            app:tabIndicatorColor="#E5C900"
-            app:tabIndicatorFullWidth="true"
-            app:tabIndicatorHeight="3.5dp"
-            app:tabMode="fixed"
-            app:tabSelectedTextColor="#101116"
-            app:tabTextAppearance="@style/TextAppearance.Sound.DiscoverTab"
-            app:tabTextColor="#7B7B80"
-            android:background="@color/white"
-            >
-
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Overview" />
-
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Songs" />
-
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Albums" />
-
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Artists" />
-        </com.google.android.material.tabs.TabLayout>
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -88,11 +52,13 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/discover_popular_list"
             android:layout_width="match_parent"
-            android:layout_height="120dp"
+            android:layout_height="220dp"
             android:clipToPadding="false"
             android:overScrollMode="never"
             android:paddingStart="24dp"
             android:paddingEnd="24dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
             android:scrollbars="none" />
 
         <TextView

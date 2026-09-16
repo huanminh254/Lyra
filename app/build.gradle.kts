@@ -43,10 +43,8 @@ dependencies {
     implementation(platform(libs.firebase.bom))
 
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.androidx.media3.session)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.appcompat)

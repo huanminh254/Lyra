@@ -1,4 +1,5 @@
 package com.devpro.sound.ui.components
+
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -7,18 +8,19 @@ import com.devpro.sound.R
 import com.devpro.sound.data.model.Song
 import com.devpro.sound.databinding.ItemFeaturedSongBinding
 
-class FeaturedSongAdapter(
+class PopularSongAdapter(
     private val onItemClick: (Song) -> Unit,
     private val onPlayClick: (Song) -> Unit
-): RecyclerView.Adapter<FeaturedSongAdapter.FeaturedViewHolder>(){
+): RecyclerView.Adapter<PopularSongAdapter.PopularViewHolder>() {
     private val songs = mutableListOf<Song>()
     private var currentSongId: String? = null
     private var isPlaying = false
 
-    fun submitList(newListSongs: List<Song>){
+    fun submitList(newSongs: List<Song>) {
         val oldSongs = songs.toList()
         songs.clear()
-        songs.addAll(newListSongs)
+        songs.addAll(newSongs)
+
         DiffUtil.calculateDiff(object : DiffUtil.Callback() {
             override fun getOldListSize(): Int = oldSongs.size
 
@@ -60,20 +62,21 @@ class FeaturedSongAdapter(
         songs[index] = songs[index].copy(viewCount = viewCount)
         notifyItemChanged(index)
     }
+
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
-    ): FeaturedViewHolder {
+    ): PopularViewHolder {
         val binding = ItemFeaturedSongBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
             false
         )
-        return FeaturedViewHolder(binding)
+        return PopularViewHolder(binding)
     }
 
     override fun onBindViewHolder(
-        holder: FeaturedViewHolder,
+        holder: PopularViewHolder,
         position: Int
     ) {
         holder.bind(songs[position])
@@ -83,9 +86,9 @@ class FeaturedSongAdapter(
         return songs.size
     }
 
-    inner class FeaturedViewHolder(
-       private val binding: ItemFeaturedSongBinding
-    ) : RecyclerView.ViewHolder(binding.root){
+    inner class PopularViewHolder(
+        private val binding: ItemFeaturedSongBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(song: Song) {
             binding.featuredTitle.text = song.title
             binding.featuredCover.loadSongCover(song.coverUrl)
@@ -103,6 +106,5 @@ class FeaturedSongAdapter(
                 onItemClick(song)
             }
         }
-
     }
 }
