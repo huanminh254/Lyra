@@ -1,42 +1,47 @@
 # Lyra
 
-Lyra is a music streaming Android application built with Kotlin and XML layouts. It allows listeners to browse a music catalog, search for songs and artists, and control playback through a focused now-playing experience.
+Lyra là ứng dụng nghe nhạc Android được xây dựng bằng Kotlin và XML. Ứng dụng cho phép người dùng duyệt danh mục bài hát, tìm kiếm bài hát hoặc nghệ sĩ và điều khiển phát nhạc thông qua màn hình Now Playing.
 
-> This is a personal Android development project. The current build focuses on catalog browsing and streaming playback; favorites, downloads, authentication, and persisted settings are still being completed.
+> Đây là dự án Android cá nhân. Phiên bản hiện tại tập trung vào duyệt danh mục, phát nhạc trực tuyến, xác thực người dùng và quản lý lượt xem.
 
-## Features
+## Chức năng
 
-- Browse songs from a music catalog.
-- Search by song title or artist.
-- Open a dedicated now-playing screen.
-- Play, pause, seek, and switch between tracks.
-- Continue controlling playback from the mini player.
-- Swipe through the now-playing screen.
-- Display cover artwork and loading, error, and empty states.
-- Load song metadata from Firebase Firestore.
-- Stream audio and load media from remote URLs.
+- Duyệt danh mục bài hát từ Firebase Firestore.
+- Hiển thị các bài hát Popular và Top Songs.
+- Tìm kiếm theo tên bài hát hoặc nghệ sĩ.
+- Mở màn hình Now Playing riêng.
+- Phát, tạm dừng, tua và chuyển bài hát.
+- Điều khiển phát nhạc từ Mini Player.
+- Vuốt trái/phải trong màn hình Now Playing để chuyển bài.
+- Hiển thị ảnh bìa cùng trạng thái loading, lỗi và danh sách rỗng.
+- Đăng nhập, đăng ký và đặt lại mật khẩu bằng Firebase Authentication.
+- Lưu bài hát yêu thích theo từng tài khoản người dùng.
+- Cho phép người dùng tải bài hát lên Firebase Storage.
+- Tính một lượt xem cho mỗi user trên mỗi bài hát sau khi nghe đủ 15 giây.
+- Điều hướng bằng radial menu gồm Discover, Favorites, Downloads và Account.
 
-The Favorites and Downloads screens are currently included as work-in-progress UI screens.
+Favorites và Downloads hiện vẫn đang được phát triển; Downloads chưa hỗ trợ tải nhạc offline hoàn chỉnh.
 
-## Tech stack
+## Công nghệ sử dụng
 
 - Kotlin
-- XML layouts, ViewBinding, Fragments, and RecyclerView
+- XML layouts, ViewBinding, Fragments và RecyclerView
 - Material Components for Android
-- MVVM with ViewModel and LiveData
+- MVVM với ViewModel và LiveData
+- Hilt Dependency Injection
 - Repository-based data layer
-- Firebase Firestore and Firebase Storage
+- Firebase Authentication, Firestore và Firebase Storage
 - AndroidX Media3 ExoPlayer
-- Coil 3 with OkHttp
+- Coil 3 với OkHttp
 - Kotlin Coroutines
-- JUnit, AndroidX Test, and Espresso
+- JUnit, AndroidX Test và Espresso
 
-## Architecture
+## Kiến trúc
 
-The application follows a lightweight MVVM architecture:
+Ứng dụng sử dụng kiến trúc MVVM kết hợp Repository và Hilt:
 
 ```text
-Firebase Firestore
+Firebase Authentication / Firestore / Storage
         │
         ▼
 Remote data source
@@ -51,7 +56,7 @@ ViewModel ───────────────► XML UI
 Media3 ExoPlayer
 ```
 
-Main source packages:
+Các package chính:
 
 ```text
 app/src/main/java/com/devpro/sound/
@@ -59,49 +64,50 @@ app/src/main/java/com/devpro/sound/
 │   ├── mapper/
 │   ├── model/
 │   ├── remote/
-│   ├── repository/
-│   └── repositoryImpl/
+│   └── repository/
+│       └── impl/
 ├── player/
 └── ui/
     ├── components/
+    ├── account/
+    ├── auth/
     ├── discover/
     ├── downloads/
     ├── favorites/
     ├── nowplaying/
-    ├── search/
-    └── settings/
+    └── search/
 ```
 
-## Requirements
+## Yêu cầu
 
 - Android Studio
 - JDK 11
 - Android SDK 37
-- Android API 24 or higher
-- A Firebase project with Firestore enabled
+- Android API 24 trở lên
+- Một Firebase project đã bật Authentication, Firestore và Storage
 
-## Getting started
+## Bắt đầu sử dụng
 
-Clone the repository:
+Clone repository:
 
 ```bash
 git clone https://github.com/huanminh254/Lyra.git
 cd Lyra
 ```
 
-Open the project in Android Studio, add your Firebase configuration file at:
+Mở dự án bằng Android Studio và đặt file cấu hình Firebase tại:
 
 ```text
 app/google-services.json
 ```
 
-Then sync Gradle and run the `app` configuration on an emulator or Android device.
+Sau đó đồng bộ Gradle và chạy cấu hình `app` trên máy ảo hoặc thiết bị Android.
 
-Do not commit `google-services.json` or other private Firebase credentials.
+Không commit `google-services.json` hoặc các thông tin xác thực Firebase riêng tư.
 
-## Firestore data
+## Dữ liệu Firestore
 
-The app reads songs from the `songs` collection. A song document can contain:
+Ứng dụng đọc bài hát từ collection `songs`. Một document bài hát có thể gồm:
 
 ```json
 {
@@ -112,65 +118,84 @@ The app reads songs from the `songs` collection. A song document can contain:
   "sourceUrl": "https://example.com/source",
   "genre": "Pop",
   "year": 2026,
-  "sortOrder": 1
+  "sortOrder": 1,
+  "viewCount": 0
 }
 ```
 
-The current development configuration also uses the `users/user_001` document for user-related data.
+Khi user nghe đủ 15 giây, ứng dụng tạo dấu xem tại:
 
-## Build and test
+```text
+songs/{songId}/viewers/{userId}
+```
 
-Run unit tests:
+Transaction Firestore sẽ chỉ tăng `viewCount` một lần cho mỗi cặp `userId` và `songId`. Rules nằm trong file `firestore.rules` và cần được deploy lên Firebase.
+
+Dữ liệu người dùng được lưu trong document:
+
+```text
+users/{userId}
+```
+
+Các danh sách hiện có gồm `favoriteSongIds` và `uploadedSongIds`.
+
+## Build và kiểm thử
+
+Chạy unit test:
 
 ```bash
 ./gradlew test
 ```
 
-Run lint checks:
+Chạy kiểm tra lint:
 
 ```bash
 ./gradlew lint
 ```
 
-Build a debug APK:
+Build debug APK:
 
 ```bash
 ./gradlew assembleDebug
 ```
 
-Run instrumented tests on a connected device or emulator:
+Chạy instrumented test trên thiết bị hoặc máy ảo đã kết nối:
 
 ```bash
 ./gradlew connectedAndroidTest
 ```
 
-## Project status
+## Trạng thái dự án
 
-Completed:
+Đã hoàn thành:
 
-- XML-based Android UI with ViewBinding.
-- Discover, search, settings, and now-playing screens.
-- Firestore-backed song catalog.
-- Media3-based audio playback.
-- Mini-player controls and shared song list components.
+- Giao diện Android XML với ViewBinding.
+- Màn Discover, Search, Login, Account và Now Playing.
+- Danh mục bài hát từ Firestore.
+- Phát nhạc bằng Media3 ExoPlayer.
+- Mini Player và các component dùng chung cho danh sách bài hát.
+- Xác thực email/password bằng Firebase.
+- Yêu thích và upload bài hát theo user.
+- Theo dõi lượt xem theo user.
 
-Planned improvements:
+Đang lên kế hoạch:
 
-- Persist favorites and downloads locally.
-- Implement real offline audio downloads.
-- Add user authentication and per-user data.
-- Persist settings preferences.
-- Add background playback and media session integration.
+- Lưu bài hát tải xuống bằng Room.
+- Hoàn thiện chức năng nghe nhạc offline.
+- Sắp xếp Popular theo lượt xem thực tế.
+- Thêm background playback và MediaSession.
+- Thêm bình luận realtime theo thời gian bài hát.
+- Hoàn thiện các luồng Favorites và Downloads.
 
-## Documentation
+## Tài liệu
 
 - [Use cases](docs/use-cases.md)
 - [Architecture diagram](docs/diagrams/lyra-architecture.svg)
 
-## Media and copyright
+## Bản quyền nội dung
 
-Lyra does not bundle copyrighted music. Audio files, cover images, and metadata should be provided through content that you own or have permission to use.
+Lyra không đóng gói nhạc có bản quyền. Audio, ảnh bìa và metadata phải là nội dung do bạn sở hữu hoặc được phép sử dụng.
 
-## License
+## Giấy phép
 
-No open-source license has been added yet. Contact the repository owner before redistributing or reusing the project.
+Hiện dự án chưa thêm giấy phép mã nguồn mở. Hãy liên hệ chủ repository trước khi phân phối hoặc sử dụng lại dự án.
