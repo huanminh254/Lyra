@@ -60,6 +60,7 @@ class SongAdapter(
             binding.songArtist.text = song.artist
             binding.songCover.loadSongCover(song.coverUrl)
             binding.root.setOnClickListener { onItemClick(song) }
+            binding.songAction.setOnClickListener { onItemClick(song) }
         }
     }
 }

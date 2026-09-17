@@ -17,14 +17,14 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="@android:color/transparent"
-            android:contentDescription="Quay lại"
+            android:contentDescription="@string/back"
             android:src="@drawable/back" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="Đăng bài hát"
+            android:text="@string/upload_song"
             android:textColor="@color/black"
             android:textSize="30sp"
             android:textStyle="bold" />
@@ -35,7 +35,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="28dp"
-            android:hint="Tên bài hát">
+            android:hint="@string/song_title_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/upload_title"
@@ -50,7 +50,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Nghệ sĩ">
+            android:hint="@string/artist_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/upload_artist"
@@ -64,14 +64,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="Chọn file nhạc" />
+            android:text="@string/choose_audio" />
 
         <TextView
             android:id="@+id/upload_audio_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Chưa chọn file nhạc"
+            android:text="@string/audio_not_selected"
             android:textColor="@color/muted_text" />
 
         <com.google.android.material.button.MaterialButton
@@ -79,14 +79,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Chọn ảnh bìa (không bắt buộc)" />
+            android:text="@string/choose_cover" />
 
         <TextView
             android:id="@+id/upload_cover_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Chưa chọn ảnh bìa"
+            android:text="@string/cover_not_selected"
             android:textColor="@color/muted_text" />
 
         <ProgressBar
@@ -102,7 +102,7 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="20dp"
-            android:text="Đăng bài hát"
+            android:text="@string/upload_song"
             android:textAllCaps="false" />
     </LinearLayout>
 </ScrollView>

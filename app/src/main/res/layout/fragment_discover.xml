@@ -22,7 +22,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:fontFamily="sans-serif"
-                android:text="Discover"
+                android:text="@string/discover"
                 android:textColor="#101116"
                 android:textSize="32sp"
                 android:textStyle="bold" />
@@ -32,7 +32,7 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="@android:color/transparent"
-                android:contentDescription="Tìm kiếm"
+                android:contentDescription="@string/search_description"
                 android:padding="10dp"
                 android:src="@android:drawable/ic_menu_search"
                 app:tint="@color/black" />
@@ -42,7 +42,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif"
-            android:text="Popular This Week"
+            android:text="@string/popular_this_week"
             android:textColor="#101116"
             android:layout_marginTop="10dp"
             android:layout_marginBottom="10dp"
@@ -67,7 +67,7 @@
             android:layout_marginTop="10dp"
             android:layout_marginBottom="10dp"
             android:fontFamily="sans-serif"
-            android:text="Top Songs"
+            android:text="@string/top_songs"
             android:textColor="#101116"
             android:textSize="25sp"
             android:textStyle="bold" />

@@ -9,9 +9,11 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.devpro.sound.R
 import com.devpro.sound.data.model.Song
 import com.devpro.sound.databinding.FragmentSearchBinding
 import com.devpro.sound.ui.components.SongAdapter
+import com.devpro.sound.ui.nowplaying.NowPlayingFragment
 import com.devpro.sound.ui.nowplaying.NowPlayingViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -31,7 +33,10 @@ class SearchFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        adapter = SongAdapter(viewModel::onSongClick)
+        adapter = SongAdapter { song ->
+            viewModel.onSongClick(song)
+            openNowPlaying()
+        }
         binding.searchList.layoutManager = LinearLayoutManager(requireContext())
         binding.searchList.adapter = adapter
         binding.searchBack.setOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
@@ -52,6 +57,14 @@ class SearchFragment : Fragment() {
         adapter.submitList(if (query.isBlank()) allSongs.take(10) else allSongs.filter {
             it.title.contains(query, ignoreCase = true) || it.artist.contains(query, ignoreCase = true)
         })
+    }
+
+    private fun openNowPlaying() {
+        parentFragmentManager
+            .beginTransaction()
+            .replace(R.id.fragment_container, NowPlayingFragment())
+            .addToBackStack(null)
+            .commit()
     }
 
     override fun onDestroyView() {

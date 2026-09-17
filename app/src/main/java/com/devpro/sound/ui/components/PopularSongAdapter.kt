@@ -92,9 +92,16 @@ class PopularSongAdapter(
         fun bind(song: Song) {
             binding.featuredTitle.text = song.title
             binding.featuredCover.loadSongCover(song.coverUrl)
-            binding.featuredPlayCount.text = "▷\n${song.viewCount}"
-            binding.featuredDownloadCount.text = "⇩\n243"
-            binding.featuredFavoriteCount.text = "♡\n193"
+            binding.featuredPlayCount.text = binding.root.context.getString(
+                R.string.view_count_format,
+                song.viewCount
+            )
+            binding.featuredDownloadCount.text = binding.root.context.getString(
+                R.string.download_count_format
+            )
+            binding.featuredFavoriteCount.text = binding.root.context.getString(
+                R.string.favorite_count_format_static
+            )
             binding.featuredPlay.setImageResource(
                 if (currentSongId == song.id && isPlaying) R.drawable.pause else R.drawable.resume
             )

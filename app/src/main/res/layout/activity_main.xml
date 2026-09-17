@@ -49,7 +49,7 @@
                 android:padding="14dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_music_note"
-                android:contentDescription="Mở điều hướng" />
+                android:contentDescription="@string/nav_open" />
             <ImageButton
                 android:id="@+id/menu_toggle_1"
                 android:layout_width="52dp"
@@ -62,7 +62,7 @@
                 android:padding="14dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_favorite"
-                android:contentDescription="Nút phụ" />
+                android:contentDescription="@string/nav_secondary" />
             <ImageButton
                 android:id="@+id/menu_toggle_2"
                 android:layout_width="52dp"
@@ -76,7 +76,7 @@
                 android:padding="14dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_download"
-                android:contentDescription="Nút phụ" />
+                android:contentDescription="@string/nav_secondary" />
             <ImageButton
                 android:id="@+id/menu_toggle_3"
                 android:layout_width="52dp"
@@ -89,6 +89,6 @@
                 android:padding="14dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/account"
-                android:contentDescription="Tài khoản" />
+                android:contentDescription="@string/account_label" />
     </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

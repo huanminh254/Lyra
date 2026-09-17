@@ -7,9 +7,11 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.devpro.sound.R
 import com.devpro.sound.databinding.FragmentFavoritesBinding
 import com.devpro.sound.ui.components.SongAdapter
 import com.devpro.sound.ui.nowplaying.NowPlayingViewModel
+import com.devpro.sound.ui.nowplaying.NowPlayingFragment
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -25,13 +27,24 @@ class FavoritesFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        adapter = SongAdapter(viewModel::onSongClick)
+        adapter = SongAdapter { song ->
+            viewModel.onSongClick(song)
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.fragment_container, NowPlayingFragment())
+                .addToBackStack(null)
+                .commit()
+        }
         binding.favoritesList.layoutManager = LinearLayoutManager(requireContext())
         binding.favoritesList.adapter = adapter
         viewModel.uiState.observe(viewLifecycleOwner) { state ->
             val songs = state.favoriteSongs.take(18)
             adapter.submitList(songs)
-            binding.favoritesCount.text = "${songs.size} tracks"
+            binding.favoritesCount.text = resources.getQuantityString(
+                R.plurals.favorite_track_count,
+                songs.size,
+                songs.size
+            )
         }
     }
 

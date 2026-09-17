@@ -23,6 +23,7 @@ import com.devpro.sound.ui.nowplaying.NowPlayingViewModel
 import javax.inject.Inject
 import kotlin.math.hypot
 import androidx.activity.viewModels
+import androidx.core.view.isVisible
 import com.devpro.sound.ui.components.MiniPlayerBinder
 import com.google.firebase.auth.FirebaseAuth
 
@@ -73,6 +74,7 @@ class MainActivity () : AppCompatActivity() {
         }
     }
 
+    @Suppress("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -83,6 +85,13 @@ class MainActivity () : AppCompatActivity() {
             RadialItem(binding.menuToggle2, NavigationTab.DOWNLOADS),
             RadialItem(binding.menuToggle3, NavigationTab.ACCOUNT)
         )
+        radialItems.forEach { item ->
+            item.button.setOnClickListener {
+                swapTabAndNavigate(item.button)
+                resetHoveredButton()
+                collapseRadialMenu()
+            }
+        }
 
         binding.menuToggleMain.setOnTouchListener { view, event ->
             when (event.actionMasked) {
@@ -105,6 +114,9 @@ class MainActivity () : AppCompatActivity() {
                 MotionEvent.ACTION_UP,
                 MotionEvent.ACTION_CANCEL -> {
                     view.removeCallbacks(showMenuRunnable)
+                    if (event.actionMasked == MotionEvent.ACTION_UP) {
+                        view.performClick()
+                    }
                     if (event.actionMasked == MotionEvent.ACTION_UP && isRadialMenuVisible()) {
                         hoveredButton?.let { swapTabAndNavigate(it) }
                     }
@@ -153,6 +165,10 @@ class MainActivity () : AppCompatActivity() {
     override fun onStop() {
         firebaseAuth.removeAuthStateListener(authStateListener)
         super.onStop()
+    }
+
+    fun navigateToDiscover() {
+        showRoot(DiscoverFragment())
     }
 
     private fun showRoot(fragment: Fragment): Boolean {
@@ -224,7 +240,7 @@ class MainActivity () : AppCompatActivity() {
     }
 
     private fun isRadialMenuVisible(): Boolean {
-        return binding.menuToggle1.visibility == View.VISIBLE
+        return binding.menuToggle1.isVisible
     }
 
     private fun swapTabAndNavigate(selectedButton: View) {

@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.devpro.sound.R
 import com.devpro.sound.data.remote.model.LoginRequest
 import com.devpro.sound.databinding.FragmentLoginBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -45,6 +46,17 @@ class LoginFragment : Fragment() {
                 viewModel.sendPasswordResetEmail(email)
             }
         }
+
+        val socialLoginNotAvailable = View.OnClickListener {
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.social_login_unavailable),
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+        binding.loginApple.setOnClickListener(socialLoginNotAvailable)
+        binding.loginGoogle.setOnClickListener(socialLoginNotAvailable)
+        binding.loginSpotify.setOnClickListener(socialLoginNotAvailable)
 
         viewModel.uiState.observe(viewLifecycleOwner) { state ->
             binding.loginSubmit.isEnabled = !state.isLoading

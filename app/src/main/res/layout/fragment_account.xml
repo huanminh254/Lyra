@@ -17,7 +17,7 @@
             android:id="@+id/account_avatar"
             android:layout_width="128dp"
             android:layout_height="128dp"
-            android:contentDescription="Ảnh đại diện tài khoản"
+            android:contentDescription="@string/account_avatar_description"
             android:scaleType="centerCrop"
             android:src="@drawable/account" />
 
@@ -25,7 +25,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Tài khoản"
+            android:text="@string/account_label"
             android:textColor="@color/black"
             android:textSize="28sp"
             android:textStyle="bold" />
@@ -43,7 +43,7 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="40dp"
-            android:text="Đăng xuất"
+            android:text="@string/logout"
             android:textAllCaps="false"
             android:textColor="@color/white"
             app:backgroundTint="@color/black" />

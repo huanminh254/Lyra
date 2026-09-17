@@ -10,6 +10,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:alpha="0.52"
+        android:contentDescription="@null"
+        android:importantForAccessibility="no"
         android:scaleType="centerCrop"
         android:src="@drawable/ic_launcher_background" />
     <LinearLayout
@@ -31,7 +33,7 @@
                 android:layout_height="48dp"
                 android:background="@android:color/transparent"
                 android:scaleType="centerInside"
-                android:contentDescription="Quay lại"
+                android:contentDescription="@string/back"
                 android:src="@drawable/back"
                 app:tint="@color/white"
                 />
@@ -41,15 +43,16 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="Now Playing"
+                android:text="@string/now_playing"
                 android:textColor="@color/white"
                 android:textSize="24sp"
                 android:textStyle="bold" />
             <ImageButton
+                android:id="@+id/now_playing_more"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="@null"
-                android:contentDescription="Thêm"
+                android:contentDescription="@string/more"
                 android:src="@drawable/more"
                 android:scaleType="centerInside"
                 app:tint="@color/white"
@@ -77,25 +80,100 @@
             android:gravity="center"
             android:textColor="@color/muted_text"
             android:textSize="18sp" />
+
+        <LinearLayout
+            android:id="@+id/now_playing_comment_bar"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/comment_bar_background"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="10dp">
+
+            <ImageView
+                android:id="@+id/comment_avatar"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/comment_avatar_background"
+                android:clipToOutline="true"
+                android:contentDescription="@string/comment_avatar_description"
+                android:scaleType="centerCrop"
+                android:src="@drawable/account" />
+
+            <EditText
+                android:id="@+id/comment_input"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:hint="@string/comment_hint"
+                android:imeOptions="actionSend"
+                android:inputType="textCapSentences|textMultiLine"
+                android:maxLines="1"
+                android:padding="0dp"
+                android:textColor="@color/white"
+                android:textColorHint="@color/muted_text"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/comment_fire"
+                android:layout_width="40dp"
+                android:layout_height="match_parent"
+                android:clickable="true"
+                android:contentDescription="@string/comment_fire"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="🔥"
+                android:textSize="24sp" />
+
+            <TextView
+                android:id="@+id/comment_wave"
+                android:layout_width="40dp"
+                android:layout_height="match_parent"
+                android:clickable="true"
+                android:contentDescription="@string/comment_wave"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="👋"
+                android:textSize="24sp" />
+
+            <TextView
+                android:id="@+id/comment_cry"
+                android:layout_width="40dp"
+                android:layout_height="match_parent"
+                android:clickable="true"
+                android:contentDescription="@string/comment_cry"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="🥺"
+                android:textSize="24sp" />
+        </LinearLayout>
+
         <SeekBar
             android:id="@+id/now_playing_seek"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="28dp"
+            android:max="1000"
             android:progressTint="@color/white"
             android:thumbTint="@color/accent_yellow" />
         <LinearLayout
+            android:id="@+id/now_playing_controls"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:layout_marginTop="28dp">
+            android:layout_marginTop="28dp"
+            android:visibility="gone">
             <ImageButton
                 android:id="@+id/now_playing_previous"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:background="@null"
                 android:scaleType="centerInside"
-                android:contentDescription="Bài trước"
+                android:contentDescription="@string/previous_song"
                 app:tint="@color/white"
                 android:layout_marginEnd="10dp"
                 android:src="@drawable/rewind"
@@ -108,7 +186,7 @@
                 android:scaleType="centerInside"
                 app:tint="@color/white"
                 android:layout_marginEnd="10dp"
-                android:contentDescription="Phát hoặc tạm dừng"
+                android:contentDescription="@string/play_pause"
                 android:src="@drawable/resume"
                 />
             <ImageButton
@@ -119,7 +197,7 @@
                 android:scaleType="centerInside"
                 app:tint="@color/white"
 
-                android:contentDescription="Bài tiếp theo"
+                android:contentDescription="@string/next_song"
                 android:src="@drawable/fastforwad"
                 />
         </LinearLayout>

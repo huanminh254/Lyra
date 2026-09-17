@@ -18,14 +18,14 @@
             android:layout_height="48dp"
             android:background="@android:color/transparent"
             android:backgroundTint="@android:color/transparent"
-            android:contentDescription="Quay lại"
+            android:contentDescription="@string/back"
             android:scaleType="centerInside"
             android:src="@drawable/back"
             />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Search"
+            android:text="@string/search"
             android:textColor="@color/black"
             android:textSize="32sp"
             android:textStyle="bold" />
@@ -35,7 +35,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="24dp"
-        android:hint="Songs, artists, albums"
+        android:hint="@string/search_hint"
+        android:importantForAutofill="no"
         android:inputType="text"
         android:padding="16dp"
         android:textColor="@color/black"

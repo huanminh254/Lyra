@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.devpro.sound.R
 import com.devpro.sound.databinding.FragmentDiscoverBinding
@@ -21,8 +20,7 @@ import dagger.hilt.android.AndroidEntryPoint
 class DiscoverFragment : Fragment() {
     private var _binding: FragmentDiscoverBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: DiscoverViewModel by viewModels()
-    private val nowPlayingViewModel: NowPlayingViewModel by activityViewModels()
+    private val viewModel: NowPlayingViewModel by activityViewModels()
     private lateinit var featuredSongAdapter: FeaturedSongAdapter
     private lateinit var popularSongAdapter: PopularSongAdapter
 
@@ -49,35 +47,34 @@ class DiscoverFragment : Fragment() {
         )
         featuredSongAdapter = FeaturedSongAdapter(
             onItemClick = {song ->
-                nowPlayingViewModel.onSongClick(song)
+                viewModel.onSongClick(song)
                 openFragment(NowPlayingFragment())
             },
             onPlayClick = {song ->
-                nowPlayingViewModel.onSongPlayClick(song)
+                viewModel.onSongPlayClick(song)
             }
         )
         popularSongAdapter = PopularSongAdapter(
             onItemClick = { song ->
-                nowPlayingViewModel.onSongClick(song)
+                viewModel.onSongClick(song)
                 openFragment(NowPlayingFragment())
             },
             onPlayClick = { song ->
-                nowPlayingViewModel.onSongPlayClick(song)
+                viewModel.onSongPlayClick(song)
             }
         )
         viewModel.uiState.observe(viewLifecycleOwner){state->
             featuredSongAdapter.submitList(state.songs)
-            popularSongAdapter.submitList(state.songs.take(5))
+            popularSongAdapter.submitList(
+                state.songs
+                    .sortedByDescending { it.viewCount }
+                    .take(7)
+            )
             binding.discoverLoading.visibility = if(state.isLoading) View.VISIBLE else View.GONE
-            binding.discoverError.visibility = if(state.errorMessenger != null) View.VISIBLE else View.GONE
-        }
-        nowPlayingViewModel.uiState.observe(viewLifecycleOwner) { state ->
+            binding.discoverError.visibility = if(state.errorMessage != null) View.VISIBLE else View.GONE
+            binding.discoverError.text = state.errorMessage
             featuredSongAdapter.updatePlaybackState(state.song?.id, state.isPlaying)
             popularSongAdapter.updatePlaybackState(state.song?.id, state.isPlaying)
-            state.song?.let { song ->
-                featuredSongAdapter.updateViewCount(song.id, song.viewCount)
-                popularSongAdapter.updateViewCount(song.id, song.viewCount)
-            }
         }
         binding.discoverPopularList.adapter = popularSongAdapter
         binding.discoverList.adapter = featuredSongAdapter

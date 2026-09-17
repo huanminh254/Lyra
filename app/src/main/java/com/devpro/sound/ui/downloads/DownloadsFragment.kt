@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.devpro.sound.R
 import com.devpro.sound.databinding.FragmentDownloadsBinding
 import com.devpro.sound.ui.components.SongAdapter
+import com.devpro.sound.ui.nowplaying.NowPlayingFragment
 import com.devpro.sound.ui.nowplaying.NowPlayingViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -26,7 +27,14 @@ class DownloadsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        adapter = SongAdapter(viewModel::onSongClick)
+        adapter = SongAdapter { song ->
+            viewModel.onSongClick(song)
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.fragment_container, NowPlayingFragment())
+                .addToBackStack(null)
+                .commit()
+        }
         binding.downloadsList.layoutManager = LinearLayoutManager(requireContext())
         binding.downloadsList.adapter = adapter
         binding.downloadsUpload.setOnClickListener {
@@ -36,11 +44,8 @@ class DownloadsFragment : Fragment() {
                 .addToBackStack(null)
                 .commit()
         }
-        viewModel.uiState.observe(viewLifecycleOwner) { state ->
-            val songs = state.songs.take(16)
-            adapter.submitList(songs)
-            binding.downloadsCount.text = "${songs.size} tracks saved offline"
-        }
+        adapter.submitList(emptyList())
+        binding.downloadsCount.text = getString(R.string.downloads_not_ready)
     }
 
     override fun onDestroyView() {

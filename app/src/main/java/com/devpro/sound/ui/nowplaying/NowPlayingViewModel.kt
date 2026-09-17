@@ -77,17 +77,22 @@ class NowPlayingViewModel @Inject constructor(
     fun refreshSongs() {
         loadSongs()
     }
-    fun onPlayPauseClick() {
-        val currentSong = _uiState.value?.song ?: return
-        val audioUrl = currentSong.audioUrl?.takeIf { it.isNotBlank() } ?: return
 
-        if (!audioPlayer.hasCurrentSong()) {
-            audioPlayer.play(audioUrl)
-        } else if (audioPlayer.isPlaying()) {
-            audioPlayer.pause()
+    fun onPlayPauseClick() {
+        val state = _uiState.value ?: return
+
+        if (audioPlayer.hasCurrentSong()) {
+            if (audioPlayer.isPlaying()) {
+                audioPlayer.pause()
+            } else {
+                audioPlayer.resume()
+            }
         } else {
-            audioPlayer.resume()
+            val audioUrl = state.song?.audioUrl?.takeIf { it.isNotBlank() }
+                ?: return
+            audioPlayer.play(audioUrl)
         }
+
         updateState { it.copy(isPlaying = audioPlayer.isPlaying()) }
     }
 

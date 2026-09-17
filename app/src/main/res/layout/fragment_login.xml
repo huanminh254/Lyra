@@ -35,7 +35,7 @@
                 android:layout_weight="1"
                 android:fontFamily="sans-serif"
                 android:letterSpacing="0.18"
-                android:text="SOUND."
+                android:text="@string/sound_brand"
                 android:textColor="@color/login_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -49,7 +49,7 @@
                 android:paddingTop="8dp"
                 android:paddingEnd="14dp"
                 android:paddingBottom="8dp"
-                android:text="v2.4"
+                android:text="@string/app_version"
                 android:textColor="@color/login_secondary"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -62,7 +62,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="36dp"
             android:background="@drawable/login_art_frame"
-            android:contentDescription="Ảnh đại diện Sound"
+            android:contentDescription="@string/login_art_description"
             android:padding="6dp"
             android:scaleType="centerCrop"
             android:src="@drawable/login_art" />
@@ -72,7 +72,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:gravity="center"
-            android:text="Chào mừng trở lại"
+            android:text="@string/welcome_back"
             android:textColor="@color/login_primary"
             android:textSize="26sp"
             android:textStyle="bold" />
@@ -84,7 +84,7 @@
             android:layout_marginTop="6dp"
             android:layout_marginEnd="18dp"
             android:gravity="center"
-            android:text="Đắm chìm trong không gian âm nhạc của riêng bạn"
+            android:text="@string/login_subtitle"
             android:textColor="@color/login_secondary"
             android:textSize="14sp" />
 
@@ -109,7 +109,7 @@
                 android:id="@+id/login_email"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:hint="Email hoặc số điện thoại"
+                android:hint="@string/email_or_phone"
                 android:inputType="textEmailAddress"
                 android:paddingStart="0dp"
                 android:paddingEnd="12dp"
@@ -141,7 +141,7 @@
                 android:id="@+id/login_password"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:hint="Mật khẩu"
+                android:hint="@string/password"
                 android:inputType="textPassword"
                 android:paddingStart="0dp"
                 android:paddingEnd="0dp"
@@ -158,7 +158,7 @@
             android:layout_marginTop="14dp"
             android:clickable="true"
             android:focusable="true"
-            android:text="Quên mật khẩu?"
+            android:text="@string/forgot_password"
             android:textColor="@color/login_secondary"
             android:textSize="13sp"
             android:textStyle="bold" />
@@ -172,7 +172,7 @@
             android:fontFamily="sans-serif"
             android:insetTop="0dp"
             android:insetBottom="0dp"
-            android:text="Đăng nhập"
+            android:text="@string/login"
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="15sp"
@@ -200,7 +200,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="14dp"
                 android:layout_marginEnd="14dp"
-                android:text="Hoặc tiếp tục với"
+                android:text="@string/continue_with"
                 android:textColor="@color/login_muted"
                 android:textSize="12sp" />
 
@@ -224,7 +224,7 @@
                 android:layout_marginEnd="8dp"
                 android:layout_weight="1"
                 android:background="@drawable/login_social_background"
-                android:contentDescription="Đăng nhập bằng Apple"
+                android:contentDescription="@string/login_apple"
                 android:padding="13dp"
                 android:src="@drawable/ic_login_apple" />
 
@@ -236,7 +236,7 @@
                 android:layout_marginEnd="4dp"
                 android:layout_weight="1"
                 android:background="@drawable/login_social_background"
-                android:contentDescription="Đăng nhập bằng Google"
+                android:contentDescription="@string/login_google"
                 android:padding="13dp"
                 android:src="@drawable/ic_login_google" />
 
@@ -247,7 +247,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:background="@drawable/login_social_background"
-                android:contentDescription="Đăng nhập bằng Spotify"
+                android:contentDescription="@string/login_spotify"
                 android:padding="13dp"
                 android:src="@drawable/ic_login_spotify" />
         </LinearLayout>
@@ -258,7 +258,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
             android:gravity="center"
-            android:text="Chưa có tài khoản? Đăng ký ngay"
+            android:text="@string/signup_prompt"
             android:textColor="@color/login_secondary"
             android:textSize="14sp" />
 

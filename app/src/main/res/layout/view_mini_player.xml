@@ -38,7 +38,7 @@
             android:layout_height="50dp"
             android:background="@android:color/transparent"
             android:backgroundTint="@android:color/transparent"
-            android:contentDescription="Phát bài hát"
+            android:contentDescription="@string/play_song"
             android:scaleType="centerInside"
             android:src="@drawable/resume"
             app:layout_constraintTop_toTopOf="parent"
@@ -79,7 +79,7 @@
         android:layout_height="60dp"
         android:background="@android:color/transparent"
         android:backgroundTint="@android:color/transparent"
-        android:contentDescription="Thêm vào yêu thích"
+        android:contentDescription="@string/favorite_song"
         android:scaleType="centerInside"
         android:src="@drawable/ic_favorite"
         app:tint="@color/white" />

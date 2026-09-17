@@ -1,3 +1,67 @@
 <resources>
     <string name="app_name">Lyra</string>
+    <string name="nav_open">Mở điều hướng</string>
+    <string name="nav_secondary">Nút phụ</string>
+    <string name="account_label">Tài khoản</string>
+    <string name="account_avatar_description">Ảnh đại diện tài khoản</string>
+    <string name="logout">Đăng xuất</string>
+    <string name="discover">Discover</string>
+    <string name="search">Search</string>
+    <string name="search_description">Tìm kiếm</string>
+    <string name="search_hint">Songs, artists, albums</string>
+    <string name="popular_this_week">Popular This Week</string>
+    <string name="top_songs">Top Songs</string>
+    <string name="downloads">Downloads</string>
+    <string name="downloads_not_ready">Tải nhạc offline sẽ được bổ sung sau</string>
+    <string name="favorites">Favorites</string>
+    <string name="upload_song">Đăng bài hát</string>
+    <string name="choose_audio">Chọn file nhạc</string>
+    <string name="audio_not_selected">Chưa chọn file nhạc</string>
+    <string name="choose_cover">Chọn ảnh bìa (không bắt buộc)</string>
+    <string name="cover_not_selected">Chưa chọn ảnh bìa</string>
+    <string name="song_title_hint">Tên bài hát</string>
+    <string name="artist_hint">Nghệ sĩ</string>
+    <string name="back">Quay lại</string>
+    <string name="now_playing">Now Playing</string>
+    <string name="more">Thêm</string>
+    <string name="previous_song">Bài trước</string>
+    <string name="play_pause">Phát hoặc tạm dừng</string>
+    <string name="next_song">Bài tiếp theo</string>
+    <string name="comment_hint">Comment...</string>
+    <string name="comment_avatar_description">Ảnh đại diện người bình luận</string>
+    <string name="comment_fire">Thả reaction lửa</string>
+    <string name="comment_wave">Thả reaction vẫy tay</string>
+    <string name="comment_cry">Thả reaction khuôn mặt rưng rưng</string>
+    <string name="song_cover">Ảnh bìa</string>
+    <string name="song_cover_description">Ảnh bìa bài hát</string>
+    <string name="song_options">Tùy chọn bài hát</string>
+    <string name="play_song">Phát bài hát</string>
+    <string name="favorite_song">Thêm vào yêu thích</string>
+    <string name="sound_brand">SOUND.</string>
+    <string name="app_version">v2.4</string>
+    <string name="login_art_description">Ảnh đại diện Sound</string>
+    <string name="welcome_back">Chào mừng trở lại</string>
+    <string name="login_subtitle">Đắm chìm trong không gian âm nhạc của riêng bạn</string>
+    <string name="email_or_phone">Email hoặc số điện thoại</string>
+    <string name="password">Mật khẩu</string>
+    <string name="forgot_password">Quên mật khẩu?</string>
+    <string name="login">Đăng nhập</string>
+    <string name="continue_with">Hoặc tiếp tục với</string>
+    <string name="login_apple">Đăng nhập bằng Apple</string>
+    <string name="login_google">Đăng nhập bằng Google</string>
+    <string name="login_spotify">Đăng nhập bằng Spotify</string>
+    <string name="signup_prompt">Chưa có tài khoản? Đăng ký ngay</string>
+    <string name="time_format">%1$s / %2$s</string>
+    <string name="view_count_format">▷
+%1$d</string>
+    <string name="download_count_format">⇩
+243</string>
+    <string name="favorite_count_format_static">♡
+193</string>
+    <string name="feature_in_development">Tính năng đang được phát triển</string>
+    <string name="social_login_unavailable">Đăng nhập mạng xã hội chưa được hỗ trợ</string>
+    <plurals name="favorite_track_count">
+        <item quantity="one">%d track</item>
+        <item quantity="other">%d tracks</item>
+    </plurals>
 </resources>
