@@ -8,6 +8,8 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.animation.ValueAnimator
+import android.view.animation.LinearInterpolator
 import kotlin.math.abs
 import kotlin.math.sin
 
@@ -40,6 +42,8 @@ class WaveformView @JvmOverloads constructor(
 
     private var waveform = emptyList<Float>()
     private var progress = 0f
+    private var renderedProgress = 0f
+    private var progressAnimator: ValueAnimator? = null
     private var isDragging = false
     private var dragStartX = 0f
     private var dragStartProgress = 0f
@@ -58,9 +62,35 @@ class WaveformView @JvmOverloads constructor(
 
     fun setProgress(value: Float) {
         val safeProgress = value.coerceIn(0f, 1f)
-        if (abs(progress - safeProgress) < 0.001f) return
+        if (abs(progress - safeProgress) < 0.0001f) return
         progress = safeProgress
-        invalidate()
+
+        if (isDragging) {
+            progressAnimator?.cancel()
+            renderedProgress = safeProgress
+            postInvalidateOnAnimation()
+            return
+        }
+
+        progressAnimator?.cancel()
+        val distance = abs(renderedProgress - safeProgress)
+        if (distance < 0.0005f) {
+            renderedProgress = safeProgress
+            postInvalidateOnAnimation()
+            return
+        }
+
+        progressAnimator = ValueAnimator.ofFloat(renderedProgress, safeProgress).apply {
+            duration = (distance * PROGRESS_ANIMATION_DURATION_MS)
+                .toLong()
+                .coerceIn(MIN_PROGRESS_ANIMATION_MS, MAX_PROGRESS_ANIMATION_MS)
+            interpolator = LinearInterpolator()
+            addUpdateListener { animator ->
+                renderedProgress = animator.animatedValue as Float
+                postInvalidateOnAnimation()
+            }
+            start()
+        }
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -74,8 +104,8 @@ class WaveformView @JvmOverloads constructor(
         val maxBarHeight = height * 0.92f
         val contentWidth = waveform.size * slotWidth
         val playheadX = width / 2f
-        val playedBoundary = progress * waveform.size
-        val scrollSlot = progress * (waveform.size - 1).coerceAtLeast(0)
+        val playedBoundary = renderedProgress * waveform.size
+        val scrollSlot = renderedProgress * (waveform.size - 1).coerceAtLeast(0)
 
         // At the beginning, bars start around the centre and extend right.
         // As playback advances, the waveform moves from right to left. Near
@@ -115,6 +145,7 @@ class WaveformView @JvmOverloads constructor(
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 isDragging = true
+                progressAnimator?.cancel()
                 dragStartX = event.x
                 dragStartProgress = progress
                 parent?.requestDisallowInterceptTouchEvent(true)
@@ -150,8 +181,15 @@ class WaveformView @JvmOverloads constructor(
         val safeProgress = (dragStartProgress + dragDistance / width.toFloat())
             .coerceIn(0f, 1f)
         progress = safeProgress
-        invalidate()
+        renderedProgress = safeProgress
+        postInvalidateOnAnimation()
         onSeek?.invoke(safeProgress)
+    }
+
+    override fun onDetachedFromWindow() {
+        progressAnimator?.cancel()
+        progressAnimator = null
+        super.onDetachedFromWindow()
     }
 
     private fun createFallbackWaveform(): List<Float> {
@@ -170,5 +208,8 @@ class WaveformView @JvmOverloads constructor(
         const val BAR_WIDTH_DP = 3.5f
         const val MIN_BAR_HEIGHT_DP = 2f
         const val FALLBACK_BAR_COUNT = 96
+        const val PROGRESS_ANIMATION_DURATION_MS = 1_000f
+        const val MIN_PROGRESS_ANIMATION_MS = 80L
+        const val MAX_PROGRESS_ANIMATION_MS = 550L
     }
 }

@@ -277,7 +277,7 @@ class NowPlayingViewModel @Inject constructor(
                     )
                 }
                 refreshCurrentCommentGroup(currentPosition)
-                delay(500)
+                delay(PROGRESS_UPDATE_INTERVAL_MS)
             }
         }
     }
@@ -420,6 +420,7 @@ class NowPlayingViewModel @Inject constructor(
 
     private companion object {
         const val LISTENED_MS_FOR_VIEW = 15_000L
+        const val PROGRESS_UPDATE_INTERVAL_MS = 100L
     }
 
 }

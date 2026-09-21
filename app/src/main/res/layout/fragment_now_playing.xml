@@ -190,7 +190,7 @@
                 <com.devpro.sound.ui.components.WaveformView
                     android:id="@+id/now_playing_seek"
                     android:layout_width="0dp"
-                    android:layout_height="88dp"
+                    android:layout_height="132dp"
                     android:layout_marginBottom="8dp"
                     app:layout_constraintBottom_toTopOf="@id/now_playing_comment_overlay"
                     app:layout_constraintEnd_toEndOf="parent"
