@@ -13,6 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+supabase.properties
 
 # Firebase configuration and locally prepared media uploads
 app/google-services.json

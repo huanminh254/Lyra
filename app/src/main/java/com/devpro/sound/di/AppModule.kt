@@ -11,6 +11,7 @@ import com.devpro.sound.data.remote.datasource.AuthRemoteDataSource
 import com.devpro.sound.data.remote.datasource.UserRemoteDataSource
 import com.devpro.sound.data.remote.datasource.SongUploadRemoteDataSource
 import com.devpro.sound.data.remote.datasource.CommentRemoteDataSource
+import com.devpro.sound.data.remote.storage.SupabaseStorageClient
 import com.devpro.sound.data.repository.CommentRepository
 import com.devpro.sound.data.repository.UserRepository
 import com.devpro.sound.data.repository.impl.UserRepositoryImpl
@@ -21,7 +22,6 @@ import com.devpro.sound.data.repository.UploadSongRepository
 import com.devpro.sound.data.repository.impl.UploadSongRepositoryImpl
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -41,12 +41,6 @@ object AppModule {
     @Singleton
     fun provideFirestore(): FirebaseFirestore{
         return FirebaseFirestore.getInstance()
-    }
-
-    @Provides
-    @Singleton
-    fun provideFirebaseStorage(): FirebaseStorage {
-        return FirebaseStorage.getInstance()
     }
 
     @Provides
@@ -115,15 +109,15 @@ object AppModule {
     @Singleton
     fun provideSongUploadRemoteDataSource(
         firestore: FirebaseFirestore,
-        storage: FirebaseStorage,
         firebaseAuth: FirebaseAuth,
-        audioWaveformExtractor: AudioWaveformExtractor
+        audioWaveformExtractor: AudioWaveformExtractor,
+        supabaseStorageClient: SupabaseStorageClient
     ): SongUploadRemoteDataSource {
         return SongUploadRemoteDataSource(
             firestore,
-            storage,
             firebaseAuth,
-            audioWaveformExtractor
+            audioWaveformExtractor,
+            supabaseStorageClient
         )
     }
 

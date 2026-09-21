@@ -59,6 +59,26 @@ class NowPlayingViewModelTest {
         assertEquals(listOf(song), viewModel.uiState.value!!.songs)
     }
 
+    @Test
+    fun toggleFavoriteUpdatesLikeCountLiveData() = runTest {
+        val viewModel = createViewModel()
+        runCurrent()
+
+        assertEquals(0, viewModel.likeCount.value)
+
+        viewModel.toggleFavorite()
+        runCurrent()
+
+        assertEquals(1, viewModel.likeCount.value)
+        assertTrue(viewModel.uiState.value!!.favoriteSongs.any { it.id == "song-1" })
+
+        viewModel.toggleFavorite()
+        runCurrent()
+
+        assertEquals(0, viewModel.likeCount.value)
+        assertFalse(viewModel.uiState.value!!.favoriteSongs.any { it.id == "song-1" })
+    }
+
     private fun createViewModel(song: Song = defaultSong()): NowPlayingViewModel {
         return NowPlayingViewModel(
             songRepository = FakeSongRepository(song),
@@ -69,6 +89,7 @@ class NowPlayingViewModelTest {
     }
 
     private fun defaultSong() = Song(
+        id = "song-1",
         title = "Default Song",
         artist = "Default Artist",
         currentTime = "01:32",

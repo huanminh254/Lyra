@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
 import android.view.GestureDetector
@@ -75,6 +76,7 @@ class NowPlayingFragment : Fragment() {
         binding.nowPlayingPlayPause.setOnClickListener { viewModel.onPlayPauseClick() }
         binding.nowPlayingNext.setOnClickListener { viewModel.onNextClick() }
         binding.nowPlayingPrevious.setOnClickListener { viewModel.onPreviousClick() }
+        binding.nowPlayingLike.setOnClickListener { viewModel.toggleFavorite() }
         binding.nowPlayingControls.setOnClickListener {
             viewModel.onPlayPauseClick()
         }
@@ -141,6 +143,20 @@ class NowPlayingFragment : Fragment() {
             binding.nowPlayingSeek.setWaveform(state.song?.waveform.orEmpty())
             binding.nowPlayingSeek.setProgress(state.progress)
             updateCoverParallax(state.progress)
+            val isFavorite = state.song?.let { song ->
+                state.favoriteSongs.any { favorite -> favorite.id == song.id }
+            } == true
+            binding.nowPlayingLike.imageTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(
+                    requireContext(),
+                    if (isFavorite) android.R.color.holo_red_light else R.color.white
+                )
+            )
+            binding.nowPlayingLike.contentDescription = if (isFavorite) {
+                "Bỏ yêu thích"
+            } else {
+                "Thêm vào yêu thích"
+            }
             binding.nowPlayingTime.text = getString(
                 R.string.time_format,
                 formatTime(state.currentPositionMs),
@@ -148,6 +164,14 @@ class NowPlayingFragment : Fragment() {
             )
             updatePlaybackControls(state.isPlaying)
             updateCommentAnimation(state.isPlaying)
+        }
+
+        viewModel.likeCount.observe(viewLifecycleOwner) { count ->
+            binding.nowPlayingLikeCount.text = count.toString()
+        }
+
+        viewModel.commentCount.observe(viewLifecycleOwner) { count ->
+            binding.nowPlayingCommentCount.text = count.toString()
         }
 
         viewLifecycleOwner.lifecycleScope.launch {

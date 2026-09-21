@@ -16,7 +16,7 @@ Lyra là ứng dụng nghe nhạc Android được xây dựng bằng Kotlin và
 - Hiển thị ảnh bìa cùng trạng thái loading, lỗi và danh sách rỗng.
 - Đăng nhập, đăng ký và đặt lại mật khẩu bằng Firebase Authentication.
 - Lưu bài hát yêu thích theo từng tài khoản người dùng.
-- Cho phép người dùng tải bài hát lên Firebase Storage.
+- Cho phép người dùng tải bài hát lên Supabase Storage.
 - Tính một lượt xem cho mỗi user trên mỗi bài hát sau khi nghe đủ 15 giây.
 - Điều hướng bằng radial menu gồm Discover, Favorites, Downloads và Account.
 
@@ -30,7 +30,8 @@ Favorites và Downloads hiện vẫn đang được phát triển; Downloads ch�
 - MVVM với ViewModel và LiveData
 - Hilt Dependency Injection
 - Repository-based data layer
-- Firebase Authentication, Firestore và Firebase Storage
+- Firebase Authentication và Firestore
+- Supabase Storage cho file MP3 và ảnh bìa
 - AndroidX Media3 ExoPlayer
 - Coil 3 với OkHttp
 - Kotlin Coroutines
@@ -41,13 +42,11 @@ Favorites và Downloads hiện vẫn đang được phát triển; Downloads ch�
 Ứng dụng sử dụng kiến trúc MVVM kết hợp Repository và Hilt:
 
 ```text
-Firebase Authentication / Firestore / Storage
-        │
-        ▼
-Remote data source
-        │
-        ▼
-Repository
+Firebase Authentication ─┐
+Firebase Firestore ──────┼──► Remote data source
+Supabase Storage ────────┘       │
+                                  ▼
+                              Repository
         │
         ▼
 ViewModel ───────────────► XML UI
@@ -84,7 +83,8 @@ app/src/main/java/com/devpro/sound/
 - JDK 11
 - Android SDK 37
 - Android API 24 trở lên
-- Một Firebase project đã bật Authentication, Firestore và Storage
+- Một Firebase project đã bật Authentication và Firestore
+- Một Supabase project có bucket Storage
 
 ## Bắt đầu sử dụng
 
@@ -101,9 +101,25 @@ Mở dự án bằng Android Studio và đặt file cấu hình Firebase tại:
 app/google-services.json
 ```
 
+Tạo file `supabase.properties` ở thư mục gốc từ mẫu `supabase.properties.example`, sau đó điền publishable/anon key của project Supabase. File này đã được gitignore.
+
 Sau đó đồng bộ Gradle và chạy cấu hình `app` trên máy ảo hoặc thiết bị Android.
 
-Không commit `google-services.json` hoặc các thông tin xác thực Firebase riêng tư.
+Không commit `google-services.json`, `supabase.properties` hoặc các thông tin xác thực riêng tư. Không dùng Supabase `service_role key` trong ứng dụng Android.
+
+### Cấu hình Supabase Storage
+
+Luồng upload sử dụng bucket trong `supabase.properties`:
+
+```properties
+supabase.url=https://uetfxxexepywuyqbbtwn.supabase.co
+supabase.anonKey=YOUR_PUBLISHABLE_OR_ANON_KEY
+supabase.audioBucket=covers
+supabase.coverBucket=covers
+supabase.coverPrefix=vpop
+```
+
+Bucket `covers` hiện đã được xác nhận là public. Nếu tạo bucket riêng cho MP3, đổi `supabase.audioBucket` sang tên bucket đó. Bucket cần có Storage policy cho phép role mà client sử dụng thực hiện `INSERT`; Firebase Auth không tự biến Firebase token thành Supabase Auth token.
 
 ## Dữ liệu Firestore
 

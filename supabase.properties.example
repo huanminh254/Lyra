@@ -1,0 +1,8 @@
+# Copy this file to supabase.properties and fill in the publishable/anon key.
+supabase.url=https://uetfxxexepywuyqbbtwn.supabase.co
+supabase.anonKey=REPLACE_WITH_SUPABASE_PUBLISHABLE_OR_ANON_KEY
+
+# The verified bucket is covers. Set audioBucket to a separate bucket if you create one.
+supabase.audioBucket=covers
+supabase.coverBucket=covers
+supabase.coverPrefix=vpop

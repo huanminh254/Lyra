@@ -1,9 +1,21 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.services)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
 }
+
+val supabaseProperties = Properties().apply {
+    val propertiesFile = rootProject.file("supabase.properties")
+    if (propertiesFile.exists()) {
+        propertiesFile.inputStream().use { load(it) }
+    }
+}
+
+fun String.toBuildConfigString(): String =
+    "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
 android {
     namespace = "com.devpro.sound"
@@ -19,6 +31,35 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "SUPABASE_URL",
+            supabaseProperties.getProperty(
+                "supabase.url",
+                "https://uetfxxexepywuyqbbtwn.supabase.co"
+            ).toBuildConfigString()
+        )
+        buildConfigField(
+            "String",
+            "SUPABASE_ANON_KEY",
+            supabaseProperties.getProperty("supabase.anonKey", "").toBuildConfigString()
+        )
+        buildConfigField(
+            "String",
+            "SUPABASE_AUDIO_BUCKET",
+            supabaseProperties.getProperty("supabase.audioBucket", "covers").toBuildConfigString()
+        )
+        buildConfigField(
+            "String",
+            "SUPABASE_COVER_BUCKET",
+            supabaseProperties.getProperty("supabase.coverBucket", "covers").toBuildConfigString()
+        )
+        buildConfigField(
+            "String",
+            "SUPABASE_COVER_PREFIX",
+            supabaseProperties.getProperty("supabase.coverPrefix", "vpop").toBuildConfigString()
+        )
     }
 
     buildTypes {
@@ -35,6 +76,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
+        buildConfig = true
         viewBinding = true
     }
 }
@@ -51,7 +93,6 @@ dependencies {
     implementation(libs.coil)
     implementation(libs.coil.network.okhttp)
     implementation(libs.firebase.firestore)
-    implementation(libs.firebase.storage)
     implementation(libs.hilt.android)
     implementation(libs.firebase.auth)
     ksp(libs.hilt.compiler)

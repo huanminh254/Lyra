@@ -34,6 +34,12 @@ class NowPlayingViewModel @Inject constructor(
     private val _uiState = MutableLiveData(NowPlayingUiState(isLoading = true))
     val uiState: LiveData<NowPlayingUiState> = _uiState
 
+    private val _likeCount = MutableLiveData(0)
+    val likeCount: LiveData<Int> = _likeCount
+
+    private val _commentCount = MutableLiveData(0)
+    val commentCount: LiveData<Int> = _commentCount
+
     private val _comments = MutableStateFlow<List<Comment>>(emptyList())
     val comments: StateFlow<List<Comment>> = _comments.asStateFlow()
 
@@ -71,10 +77,18 @@ class NowPlayingViewModel @Inject constructor(
                     playableSongs.mapNotNull { it.audioUrl }
                 )
 
+                val firstSong = playableSongs.firstOrNull()
+                _likeCount.value = if (firstSong != null && firstSong.id in favoriteSongIds) {
+                    1
+                } else {
+                    0
+                }
+                _commentCount.value = 0
+
                 updateState {
                     it.copy(
                         songs = songs,
-                        song = playableSongs.firstOrNull(),
+                        song = firstSong,
                         favoriteSongs = songs.filter { it.id in favoriteSongIds },
                         isLoading = false,
                         errorMessage = null
@@ -82,6 +96,8 @@ class NowPlayingViewModel @Inject constructor(
                 }
                 observeCommentsForSong(playableSongs.firstOrNull()?.id)
             }.onFailure { error ->
+                _likeCount.value = 0
+                _commentCount.value = 0
                 updateState {
                     it.copy(
                         isLoading = false,
@@ -119,6 +135,11 @@ class NowPlayingViewModel @Inject constructor(
         val index = playableSongs.indexOfFirst { it.id == song.id }
         if (index == -1) return
         audioPlayer.playAt(index)
+        _likeCount.value = if (_uiState.value?.favoriteSongs?.any { it.id == song.id } == true) {
+            1
+        } else {
+            0
+        }
         updateState { it.copy(song = song, isPlaying = audioPlayer.isPlaying()) }
         observeCommentsForSong(song.id)
     }
@@ -135,6 +156,7 @@ class NowPlayingViewModel @Inject constructor(
         val currentSong = _uiState.value?.song ?: return
         val wasFavorite = _uiState.value?.favoriteSongs
             ?.any { it.id == currentSong.id } == true
+        val previousLikeCount = _likeCount.value ?: 0
         val updatedFavorites = if (wasFavorite) {
             _uiState.value?.favoriteSongs.orEmpty()
                 .filterNot { it.id == currentSong.id }
@@ -145,6 +167,11 @@ class NowPlayingViewModel @Inject constructor(
         updateState { state ->
             state.copy(favoriteSongs = updatedFavorites, errorMessage = null)
         }
+        _likeCount.value = if (wasFavorite) {
+            (previousLikeCount - 1).coerceAtLeast(0)
+        } else {
+            previousLikeCount + 1
+        }
 
         viewModelScope.launch {
             runCatching {
@@ -154,6 +181,7 @@ class NowPlayingViewModel @Inject constructor(
                     userRepository.addFavoriteSong(currentSong.id)
                 }
             }.onFailure { exception ->
+                _likeCount.value = previousLikeCount
                 updateState { state ->
                     state.copy(
                         favoriteSongs = if (wasFavorite) {
@@ -292,6 +320,11 @@ class NowPlayingViewModel @Inject constructor(
 
     private fun syncCurrentSong() {
         val song = playableSongs.getOrNull(audioPlayer.getCurrentSongIndex()) ?: return
+        _likeCount.value = if (_uiState.value?.favoriteSongs?.any { it.id == song.id } == true) {
+            1
+        } else {
+            0
+        }
         updateState { it.copy(song = song, isPlaying = audioPlayer.isPlaying()) }
         observeCommentsForSong(song.id)
     }
@@ -300,6 +333,7 @@ class NowPlayingViewModel @Inject constructor(
         commentsJob?.cancel()
         _comments.value = emptyList()
         _currentComments.value = emptyList()
+        _commentCount.value = 0
         currentCommentSongId = songId
         currentCommentSecond = null
         lastCommentPositionMs = 0L
@@ -315,6 +349,7 @@ class NowPlayingViewModel @Inject constructor(
                 }
                 .collect { commentList ->
                     _comments.value = commentList
+                    _commentCount.value = commentList.size
                     if (currentCommentSecond == null) {
                         refreshCurrentCommentGroup(
                             positionMs = _uiState.value?.currentPositionMs ?: 0L,
