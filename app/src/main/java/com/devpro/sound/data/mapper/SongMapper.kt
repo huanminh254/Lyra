@@ -17,7 +17,8 @@ fun SongEntity.toSong(id: String = this.id): Song {
         sourceUrl = sourceUrl,
         genre = genre,
         year = year,
-        viewCount = viewCount
+        viewCount = viewCount,
+        waveform = waveform.map(Double::toFloat)
     )
 }
 
@@ -34,6 +35,7 @@ fun Song.toEntity(): SongEntity {
         sourceUrl = sourceUrl,
         genre = genre,
         year = year,
-        viewCount = viewCount
+        viewCount = viewCount,
+        waveform = waveform.map(Float::toDouble)
     )
 }

@@ -36,8 +36,7 @@ service cloud.firestore {
         && resource.data.ownerId == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'title',
-          'artist',
-          'coverUrl'
+          'artist'
         ]);
       allow update: if signedIn()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
@@ -60,6 +59,31 @@ service cloud.firestore {
           && request.resource.data.userId == request.auth.uid
           && request.resource.data.keys().hasOnly(['userId', 'viewedAt']);
         allow update, delete: if false;
+      }
+
+      match /comments/{commentId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.songId == songId
+          && request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.keys().hasOnly([
+            'songId',
+            'userId',
+            'userName',
+            'userAvatarUrl',
+            'content',
+            'timestampMs',
+            'createdAt'
+          ]);
+        allow update: if signedIn()
+          && resource.data.userId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'content'
+          ]);
+        allow delete: if signedIn()
+          && resource.data.userId == request.auth.uid;
       }
     }
   }

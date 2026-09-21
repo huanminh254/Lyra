@@ -45,7 +45,6 @@ class MainActivity () : AppCompatActivity() {
         DOWNLOADS(R.drawable.ic_download),
         ACCOUNT(R.drawable.account)
     }
-
     private data class RadialItem(
         val button: ImageButton,
         var tab: NavigationTab
@@ -393,4 +392,5 @@ class MainActivity () : AppCompatActivity() {
     private fun isAuthenticated(): Boolean {
         return firebaseAuth.currentUser != null
     }
+
 }

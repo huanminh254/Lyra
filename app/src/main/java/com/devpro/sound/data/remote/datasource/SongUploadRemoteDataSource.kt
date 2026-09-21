@@ -1,5 +1,6 @@
 package com.devpro.sound.data.remote.datasource
 
+import com.devpro.sound.data.audio.AudioWaveformExtractor
 import com.devpro.sound.data.remote.model.SongEntity
 import com.devpro.sound.data.remote.model.UploadSongRequest
 import com.google.firebase.auth.FirebaseAuth
@@ -12,11 +13,14 @@ import kotlinx.coroutines.tasks.await
 class SongUploadRemoteDataSource(
     private val firestore: FirebaseFirestore,
     private val storage: FirebaseStorage,
-    private val firebaseAuth: FirebaseAuth
+    private val firebaseAuth: FirebaseAuth,
+    private val audioWaveformExtractor: AudioWaveformExtractor
 ) {
     suspend fun uploadSong(request: UploadSongRequest): SongEntity {
         val ownerId = firebaseAuth.currentUser?.uid
             ?: throw IllegalStateException("Người dùng chưa đăng nhập")
+
+        val waveform = audioWaveformExtractor.extract(request.audioUri)
 
         val songReference = firestore.collection(SONGS_COLLECTION).document()
         val songId = songReference.id
@@ -38,7 +42,8 @@ class SongUploadRemoteDataSource(
             artist = request.artist,
             audioUrl = audioUrl,
             coverUrl = coverUrl,
-            ownerId = ownerId
+            ownerId = ownerId,
+            waveform = waveform.map(Float::toDouble)
         )
 
         songReference.set(song).await()

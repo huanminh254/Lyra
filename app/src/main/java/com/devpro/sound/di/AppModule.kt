@@ -1,5 +1,6 @@
 package com.devpro.sound.di
 
+import com.devpro.sound.data.audio.AudioWaveformExtractor
 import com.devpro.sound.data.remote.datasource.SongRemoteDataSource
 import com.devpro.sound.data.repository.SongRepository
 import com.devpro.sound.data.repository.impl.SongRepositoryImpl
@@ -9,8 +10,11 @@ import android.content.Context
 import com.devpro.sound.data.remote.datasource.AuthRemoteDataSource
 import com.devpro.sound.data.remote.datasource.UserRemoteDataSource
 import com.devpro.sound.data.remote.datasource.SongUploadRemoteDataSource
+import com.devpro.sound.data.remote.datasource.CommentRemoteDataSource
+import com.devpro.sound.data.repository.CommentRepository
 import com.devpro.sound.data.repository.UserRepository
 import com.devpro.sound.data.repository.impl.UserRepositoryImpl
+import com.devpro.sound.data.repository.impl.CommentRepositoryImpl
 import com.devpro.sound.data.repository.AuthRepository
 import com.devpro.sound.data.repository.impl.AuthRepositoryImpl
 import com.devpro.sound.data.repository.UploadSongRepository
@@ -44,6 +48,14 @@ object AppModule {
     fun provideFirebaseStorage(): FirebaseStorage {
         return FirebaseStorage.getInstance()
     }
+
+    @Provides
+    @Singleton
+    fun provideAudioWaveformExtractor(
+        @ApplicationContext context: Context
+    ): AudioWaveformExtractor {
+        return AudioWaveformExtractor(context)
+    }
     @Provides
     @Singleton
     fun provideSongRemoteDataSource(
@@ -54,9 +66,29 @@ object AppModule {
     }
     @Provides
     @Singleton
-    fun provideSongRepository(dataSource: SongRemoteDataSource): SongRepository{
+    fun provideSongRepository(
+        dataSource: SongRemoteDataSource
+    ): SongRepository{
         return SongRepositoryImpl(dataSource)
     }
+
+    @Provides
+    @Singleton
+    fun provideCommentRemoteDataSource(
+        firestore: FirebaseFirestore,
+        firebaseAuth: FirebaseAuth
+    ): CommentRemoteDataSource {
+        return CommentRemoteDataSource(firestore, firebaseAuth)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCommentRepository(
+        dataSource: CommentRemoteDataSource
+    ): CommentRepository {
+        return CommentRepositoryImpl(dataSource)
+    }
+
     @Provides
     @Singleton
     fun provideAudioPlayer(@ApplicationContext context: Context): AudioPlayer{
@@ -84,9 +116,15 @@ object AppModule {
     fun provideSongUploadRemoteDataSource(
         firestore: FirebaseFirestore,
         storage: FirebaseStorage,
-        firebaseAuth: FirebaseAuth
+        firebaseAuth: FirebaseAuth,
+        audioWaveformExtractor: AudioWaveformExtractor
     ): SongUploadRemoteDataSource {
-        return SongUploadRemoteDataSource(firestore, storage, firebaseAuth)
+        return SongUploadRemoteDataSource(
+            firestore,
+            storage,
+            firebaseAuth,
+            audioWaveformExtractor
+        )
     }
 
     @Provides

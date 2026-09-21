@@ -1,10 +1,13 @@
 package com.devpro.sound.ui.nowplaying
 
 import com.devpro.sound.data.model.Song
+import com.devpro.sound.data.repository.CommentRepository
 import com.devpro.sound.data.repository.SongRepository
 import com.devpro.sound.data.repository.UserRepository
 import com.devpro.sound.player.AudioPlayer
 import com.devpro.sound.MainDispatcherRule
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -60,7 +63,8 @@ class NowPlayingViewModelTest {
         return NowPlayingViewModel(
             songRepository = FakeSongRepository(song),
             audioPlayer = FakeAudioPlayer(),
-            userRepository = FakeUserRepository()
+            userRepository = FakeUserRepository(),
+            commentRepository = FakeCommentRepository()
         )
     }
 
@@ -82,6 +86,18 @@ class NowPlayingViewModelTest {
         override suspend fun getFavoriteSongIds(): List<String> = emptyList()
         override suspend fun addFavoriteSong(songId: String) = Unit
         override suspend fun removeFavoriteSong(songId: String) = Unit
+    }
+
+    private class FakeCommentRepository : CommentRepository {
+        override fun observeComments(songId: String): Flow<List<com.devpro.sound.data.model.Comment>> {
+            return emptyFlow()
+        }
+
+        override suspend fun addComment(
+            songId: String,
+            content: String,
+            timestampMs: Long
+        ) = Unit
     }
 
     private class FakeAudioPlayer : AudioPlayer {

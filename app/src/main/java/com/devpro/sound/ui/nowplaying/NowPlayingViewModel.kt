@@ -5,13 +5,20 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
+import com.devpro.sound.data.model.Comment
 import com.devpro.sound.data.model.Song
+import com.devpro.sound.data.repository.CommentRepository
 import com.devpro.sound.data.repository.SongRepository
 import com.devpro.sound.data.repository.UserRepository
 import com.devpro.sound.player.AudioPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,14 +27,25 @@ import javax.inject.Inject
 class NowPlayingViewModel @Inject constructor(
     private val songRepository: SongRepository,
     private val audioPlayer: AudioPlayer,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val commentRepository: CommentRepository
 ) : ViewModel() {
 
     private val _uiState = MutableLiveData(NowPlayingUiState(isLoading = true))
     val uiState: LiveData<NowPlayingUiState> = _uiState
 
+    private val _comments = MutableStateFlow<List<Comment>>(emptyList())
+    val comments: StateFlow<List<Comment>> = _comments.asStateFlow()
+
+    private val _currentComments = MutableStateFlow<List<Comment>>(emptyList())
+    val currentComments: StateFlow<List<Comment>> = _currentComments.asStateFlow()
+
     private var playableSongs: List<Song> = emptyList()
     private var progressJob: Job? = null
+    private var commentsJob: Job? = null
+    private var currentCommentSongId: String? = null
+    private var currentCommentSecond: Long? = null
+    private var lastCommentPositionMs = 0L
     private val listenedMsBySong = mutableMapOf<String, Long>()
     private val recordedViewSongIds = mutableSetOf<String>()
     private val pendingViewSongIds = mutableSetOf<String>()
@@ -62,6 +80,7 @@ class NowPlayingViewModel @Inject constructor(
                         errorMessage = null
                     )
                 }
+                observeCommentsForSong(playableSongs.firstOrNull()?.id)
             }.onFailure { error ->
                 updateState {
                     it.copy(
@@ -101,6 +120,7 @@ class NowPlayingViewModel @Inject constructor(
         if (index == -1) return
         audioPlayer.playAt(index)
         updateState { it.copy(song = song, isPlaying = audioPlayer.isPlaying()) }
+        observeCommentsForSong(song.id)
     }
 
     fun onSongPlayClick(song: Song) {
@@ -156,6 +176,7 @@ class NowPlayingViewModel @Inject constructor(
         val seekPosition = (duration * safeProgress).toLong()
         audioPlayer.seekTo(seekPosition)
         updateState { it.copy(progress = safeProgress, currentPositionMs = seekPosition) }
+        refreshCurrentCommentGroup(seekPosition, force = true)
     }
 
     fun onNextClick() {
@@ -171,6 +192,7 @@ class NowPlayingViewModel @Inject constructor(
     }
 
     override fun onCleared() {
+        commentsJob?.cancel()
         audioPlayer.release()
     }
 
@@ -226,6 +248,7 @@ class NowPlayingViewModel @Inject constructor(
                         progress = progress
                     )
                 }
+                refreshCurrentCommentGroup(currentPosition)
                 delay(500)
             }
         }
@@ -270,6 +293,90 @@ class NowPlayingViewModel @Inject constructor(
     private fun syncCurrentSong() {
         val song = playableSongs.getOrNull(audioPlayer.getCurrentSongIndex()) ?: return
         updateState { it.copy(song = song, isPlaying = audioPlayer.isPlaying()) }
+        observeCommentsForSong(song.id)
+    }
+
+    private fun observeCommentsForSong(songId: String?) {
+        commentsJob?.cancel()
+        _comments.value = emptyList()
+        _currentComments.value = emptyList()
+        currentCommentSongId = songId
+        currentCommentSecond = null
+        lastCommentPositionMs = 0L
+
+        if (songId.isNullOrBlank()) return
+
+        commentsJob = viewModelScope.launch {
+            commentRepository
+                .observeComments(songId)
+                .catch {
+                    _comments.value = emptyList()
+                    _currentComments.value = emptyList()
+                }
+                .collect { commentList ->
+                    _comments.value = commentList
+                    if (currentCommentSecond == null) {
+                        refreshCurrentCommentGroup(
+                            positionMs = _uiState.value?.currentPositionMs ?: 0L,
+                            force = true
+                        )
+                    }
+                }
+        }
+    }
+
+    fun addComment(content: String) {
+        val cleanContent = content.trim()
+        val currentSong = _uiState.value?.song ?: return
+        if (cleanContent.isBlank()) return
+
+        viewModelScope.launch {
+            runCatching {
+                commentRepository.addComment(
+                    songId = currentSong.id,
+                    content = cleanContent,
+                    timestampMs = _uiState.value?.currentPositionMs
+                        ?: audioPlayer.getCurrentPosition()
+                )
+            }.onFailure { exception ->
+                updateState { state ->
+                    state.copy(
+                        errorMessage = exception.message
+                            ?: "Không thể gửi bình luận"
+                    )
+                }
+            }
+        }
+    }
+
+    private fun refreshCurrentCommentGroup(
+        positionMs: Long,
+        force: Boolean = false
+    ) {
+        val safePositionMs = positionMs.coerceAtLeast(0L)
+        val second = safePositionMs / 1_000L
+        val movedBackward = safePositionMs < lastCommentPositionMs
+        val shouldRefresh = force ||
+            currentCommentSecond == null ||
+            currentCommentSecond != second ||
+            movedBackward
+
+        if (!shouldRefresh) {
+            lastCommentPositionMs = safePositionMs
+            return
+        }
+
+        currentCommentSecond = second
+        lastCommentPositionMs = safePositionMs
+        _currentComments.value = _comments.value
+            .filter { comment ->
+                comment.timestampMs / 1_000L == second &&
+                    comment.timestampMs >= safePositionMs
+            }
+            .sortedWith(
+                compareBy<Comment> { it.timestampMs }
+                    .thenBy { it.createdAtMillis }
+            )
     }
 
     private fun updateState(transform: (NowPlayingUiState) -> NowPlayingUiState) {
