@@ -40,6 +40,9 @@ class NowPlayingViewModel @Inject constructor(
     private val _commentCount = MutableLiveData(0)
     val commentCount: LiveData<Int> = _commentCount
 
+    private val _playbackProgress = MutableLiveData(0f)
+    val playbackProgress: LiveData<Float> = _playbackProgress
+
     private val _comments = MutableStateFlow<List<Comment>>(emptyList())
     val comments: StateFlow<List<Comment>> = _comments.asStateFlow()
 
@@ -84,6 +87,7 @@ class NowPlayingViewModel @Inject constructor(
                     0
                 }
                 _commentCount.value = 0
+                _playbackProgress.value = 0f
 
                 updateState {
                     it.copy(
@@ -98,6 +102,7 @@ class NowPlayingViewModel @Inject constructor(
             }.onFailure { error ->
                 _likeCount.value = 0
                 _commentCount.value = 0
+                _playbackProgress.value = 0f
                 updateState {
                     it.copy(
                         isLoading = false,
@@ -135,6 +140,7 @@ class NowPlayingViewModel @Inject constructor(
         val index = playableSongs.indexOfFirst { it.id == song.id }
         if (index == -1) return
         audioPlayer.playAt(index)
+        _playbackProgress.value = 0f
         _likeCount.value = if (_uiState.value?.favoriteSongs?.any { it.id == song.id } == true) {
             1
         } else {
@@ -203,6 +209,7 @@ class NowPlayingViewModel @Inject constructor(
         val safeProgress = progress.coerceIn(0f, 1f)
         val seekPosition = (duration * safeProgress).toLong()
         audioPlayer.seekTo(seekPosition)
+        _playbackProgress.value = safeProgress
         updateState { it.copy(progress = safeProgress, currentPositionMs = seekPosition) }
         refreshCurrentCommentGroup(seekPosition, force = true)
     }
@@ -276,6 +283,7 @@ class NowPlayingViewModel @Inject constructor(
                         progress = progress
                     )
                 }
+                _playbackProgress.value = progress
                 refreshCurrentCommentGroup(currentPosition)
                 delay(PROGRESS_UPDATE_INTERVAL_MS)
             }

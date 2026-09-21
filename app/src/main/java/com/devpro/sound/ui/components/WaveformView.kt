@@ -8,8 +8,6 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import android.animation.ValueAnimator
-import android.view.animation.LinearInterpolator
 import kotlin.math.abs
 import kotlin.math.sin
 
@@ -39,11 +37,39 @@ class WaveformView @JvmOverloads constructor(
         strokeWidth = dp(1f)
         style = Paint.Style.STROKE
     }
+    private val barRect = RectF()
 
     private var waveform = emptyList<Float>()
     private var progress = 0f
     private var renderedProgress = 0f
-    private var progressAnimator: ValueAnimator? = null
+    private var animationStartProgress = 0f
+    private var animationStartNanos = 0L
+    private var animationDurationNanos = 0L
+    private var frameScheduled = false
+    private val frameRunnable = object : Runnable {
+        override fun run() {
+            frameScheduled = false
+            val now = System.nanoTime()
+            val elapsed = now - animationStartNanos
+            val fraction = if (animationDurationNanos <= 0L) {
+                1f
+            } else {
+                (elapsed.toDouble() / animationDurationNanos.toDouble())
+                    .coerceIn(0.0, 1.0)
+                    .toFloat()
+            }
+            renderedProgress = animationStartProgress +
+                (progress - animationStartProgress) * fraction
+
+            if (fraction >= 1f || abs(renderedProgress - progress) < PROGRESS_EPSILON) {
+                renderedProgress = progress
+            } else {
+                scheduleNextFrame()
+            }
+            postInvalidateOnAnimation()
+        }
+    }
+    private var fallbackWaveform: List<Float>? = null
     private var isDragging = false
     private var dragStartX = 0f
     private var dragStartProgress = 0f
@@ -54,43 +80,38 @@ class WaveformView @JvmOverloads constructor(
     }
 
     fun setWaveform(values: List<Float>) {
-        val nextWaveform = values.takeIf { it.isNotEmpty() } ?: createFallbackWaveform()
-        if (waveform == nextWaveform) return
+        val nextWaveform = values.takeIf { it.isNotEmpty() } ?: getFallbackWaveform()
+        if (waveform === nextWaveform || waveform == nextWaveform) return
         waveform = nextWaveform
-        invalidate()
+        postInvalidateOnAnimation()
     }
 
     fun setProgress(value: Float) {
         val safeProgress = value.coerceIn(0f, 1f)
-        if (abs(progress - safeProgress) < 0.0001f) return
+        if (abs(progress - safeProgress) < PROGRESS_EPSILON) return
         progress = safeProgress
 
         if (isDragging) {
-            progressAnimator?.cancel()
+            removeCallbacks(frameRunnable)
+            frameScheduled = false
             renderedProgress = safeProgress
             postInvalidateOnAnimation()
             return
         }
 
-        progressAnimator?.cancel()
         val distance = abs(renderedProgress - safeProgress)
-        if (distance < 0.0005f) {
+        if (distance < PROGRESS_EPSILON) {
             renderedProgress = safeProgress
             postInvalidateOnAnimation()
             return
         }
 
-        progressAnimator = ValueAnimator.ofFloat(renderedProgress, safeProgress).apply {
-            duration = (distance * PROGRESS_ANIMATION_DURATION_MS)
-                .toLong()
-                .coerceIn(MIN_PROGRESS_ANIMATION_MS, MAX_PROGRESS_ANIMATION_MS)
-            interpolator = LinearInterpolator()
-            addUpdateListener { animator ->
-                renderedProgress = animator.animatedValue as Float
-                postInvalidateOnAnimation()
-            }
-            start()
-        }
+        animationStartProgress = renderedProgress
+        animationStartNanos = System.nanoTime()
+        animationDurationNanos = (distance * PROGRESS_ANIMATION_DURATION_MS_PER_UNIT)
+            .toLong()
+            .coerceIn(MIN_PROGRESS_ANIMATION_MS, MAX_PROGRESS_ANIMATION_MS) * NANOS_PER_MILLISECOND
+        scheduleNextFrame()
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -102,7 +123,6 @@ class WaveformView @JvmOverloads constructor(
         val barWidth = dp(BAR_WIDTH_DP).coerceAtMost(slotWidth * 0.72f)
         val centerY = height / 2f
         val maxBarHeight = height * 0.92f
-        val contentWidth = waveform.size * slotWidth
         val playheadX = width / 2f
         val playedBoundary = renderedProgress * waveform.size
         val scrollSlot = renderedProgress * (waveform.size - 1).coerceAtLeast(0)
@@ -126,14 +146,14 @@ class WaveformView @JvmOverloads constructor(
                 val barHeight = (maxBarHeight * safeAmplitude.coerceAtLeast(0.06f))
                     .coerceAtLeast(dp(MIN_BAR_HEIGHT_DP))
                 val centerX = offset + index * slotWidth + slotWidth / 2f
-                val rect = RectF(
+                barRect.set(
                     centerX - barWidth / 2f,
                     centerY - barHeight / 2f,
                     centerX + barWidth / 2f,
                     centerY + barHeight / 2f
                 )
                 val paint = if (index < playedBoundary) playedPaint else remainingPaint
-                canvas.drawRoundRect(rect, barWidth / 2f, barWidth / 2f, paint)
+                canvas.drawRoundRect(barRect, barWidth / 2f, barWidth / 2f, paint)
             }
         }
 
@@ -145,7 +165,8 @@ class WaveformView @JvmOverloads constructor(
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 isDragging = true
-                progressAnimator?.cancel()
+                removeCallbacks(frameRunnable)
+                frameScheduled = false
                 dragStartX = event.x
                 dragStartProgress = progress
                 parent?.requestDisallowInterceptTouchEvent(true)
@@ -186,17 +207,23 @@ class WaveformView @JvmOverloads constructor(
         onSeek?.invoke(safeProgress)
     }
 
+    private fun scheduleNextFrame() {
+        if (frameScheduled) return
+        frameScheduled = true
+        postOnAnimation(frameRunnable)
+    }
+
     override fun onDetachedFromWindow() {
-        progressAnimator?.cancel()
-        progressAnimator = null
+        removeCallbacks(frameRunnable)
+        frameScheduled = false
         super.onDetachedFromWindow()
     }
 
-    private fun createFallbackWaveform(): List<Float> {
-        return List(FALLBACK_BAR_COUNT) { index ->
+    private fun getFallbackWaveform(): List<Float> {
+        return fallbackWaveform ?: List(FALLBACK_BAR_COUNT) { index ->
             (0.18f + abs(sin(index * 0.53f)).toFloat() * 0.7f)
                 .coerceIn(0f, 1f)
-        }
+        }.also { fallbackWaveform = it }
     }
 
     private fun dp(value: Float): Float {
@@ -208,8 +235,10 @@ class WaveformView @JvmOverloads constructor(
         const val BAR_WIDTH_DP = 3.5f
         const val MIN_BAR_HEIGHT_DP = 2f
         const val FALLBACK_BAR_COUNT = 96
-        const val PROGRESS_ANIMATION_DURATION_MS = 1_000f
+        const val PROGRESS_ANIMATION_DURATION_MS_PER_UNIT = 1_000f
         const val MIN_PROGRESS_ANIMATION_MS = 80L
         const val MAX_PROGRESS_ANIMATION_MS = 550L
+        const val NANOS_PER_MILLISECOND = 1_000_000L
+        const val PROGRESS_EPSILON = 0.0001f
     }
 }

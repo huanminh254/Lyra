@@ -45,6 +45,9 @@ class NowPlayingFragment : Fragment() {
     private val swipeDistance = 120f
     private var commentAnimator: AnimatorSet? = null
     private var playbackControlsHidden = false
+    private var boundSongId: String? = null
+    private var lastRenderedPlaying: Boolean? = null
+    private var lastRenderedFavorite: Boolean? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentNowPlayingBinding.inflate(inflater, container, false)
@@ -53,6 +56,9 @@ class NowPlayingFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        boundSongId = null
+        lastRenderedPlaying = null
+        lastRenderedFavorite = null
 
         requireActivity().onBackPressedDispatcher.addCallback(
             viewLifecycleOwner,
@@ -131,39 +137,54 @@ class NowPlayingFragment : Fragment() {
             binding.nowPlayingLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
             binding.nowPlayingError.visibility = if (state.errorMessage != null) View.VISIBLE else View.GONE
             binding.nowPlayingError.text = state.errorMessage
-            state.song?.let { song ->
-                binding.nowPlayingTitle.text = song.title
-                binding.nowPlayingArtist.text = song.artist
-                binding.nowPlayingCover.loadSongCover(song.coverUrl)
-                prepareCoverParallax()
+            if (boundSongId != state.song?.id) {
+                boundSongId = state.song?.id
+                state.song?.let { song ->
+                    binding.nowPlayingTitle.text = song.title
+                    binding.nowPlayingArtist.text = song.artist
+                    binding.nowPlayingCover.loadSongCover(song.coverUrl)
+                    binding.nowPlayingSeek.setWaveform(song.waveform)
+                    prepareCoverParallax()
+                }
             }
-            binding.nowPlayingPlayPause.setImageResource(
-                if (state.isPlaying) com.devpro.sound.R.drawable.pause else com.devpro.sound.R.drawable.resume
-            )
-            binding.nowPlayingSeek.setWaveform(state.song?.waveform.orEmpty())
-            binding.nowPlayingSeek.setProgress(state.progress)
-            updateCoverParallax(state.progress)
+
+            if (lastRenderedPlaying != state.isPlaying) {
+                lastRenderedPlaying = state.isPlaying
+                binding.nowPlayingPlayPause.setImageResource(
+                    if (state.isPlaying) com.devpro.sound.R.drawable.pause
+                    else com.devpro.sound.R.drawable.resume
+                )
+                updatePlaybackControls(state.isPlaying)
+                updateCommentAnimation(state.isPlaying)
+            }
+
             val isFavorite = state.song?.let { song ->
                 state.favoriteSongs.any { favorite -> favorite.id == song.id }
             } == true
-            binding.nowPlayingLike.imageTintList = ColorStateList.valueOf(
-                ContextCompat.getColor(
-                    requireContext(),
-                    if (isFavorite) android.R.color.holo_red_light else R.color.white
+            if (lastRenderedFavorite != isFavorite) {
+                lastRenderedFavorite = isFavorite
+                binding.nowPlayingLike.imageTintList = ColorStateList.valueOf(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        if (isFavorite) android.R.color.holo_red_light else R.color.white
+                    )
                 )
-            )
-            binding.nowPlayingLike.contentDescription = if (isFavorite) {
-                "Bỏ yêu thích"
-            } else {
-                "Thêm vào yêu thích"
+                binding.nowPlayingLike.contentDescription = if (isFavorite) {
+                    "Bỏ yêu thích"
+                } else {
+                    "Thêm vào yêu thích"
+                }
             }
             binding.nowPlayingTime.text = getString(
                 R.string.time_format,
                 formatTime(state.currentPositionMs),
                 formatTime(state.durationMs)
             )
-            updatePlaybackControls(state.isPlaying)
-            updateCommentAnimation(state.isPlaying)
+        }
+
+        viewModel.playbackProgress.observe(viewLifecycleOwner) { progress ->
+            binding.nowPlayingSeek.setProgress(progress)
+            updateCoverParallax(progress)
         }
 
         viewModel.likeCount.observe(viewLifecycleOwner) { count ->
@@ -343,6 +364,9 @@ class NowPlayingFragment : Fragment() {
     override fun onDestroyView() {
         commentAnimator?.cancel()
         commentAnimator = null
+        boundSongId = null
+        lastRenderedPlaying = null
+        lastRenderedFavorite = null
         super.onDestroyView()
         _binding = null
     }
