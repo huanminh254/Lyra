@@ -42,15 +42,23 @@
     <string name="login_art_description">Ảnh đại diện Sound</string>
     <string name="welcome_back">Chào mừng trở lại</string>
     <string name="login_subtitle">Đắm chìm trong không gian âm nhạc của riêng bạn</string>
-    <string name="email_or_phone">Email hoặc số điện thoại</string>
+    <string name="create_account">Tạo tài khoản</string>
+    <string name="register_subtitle">Bắt đầu hành trình âm nhạc của bạn</string>
+    <string name="email_or_phone">Email</string>
     <string name="password">Mật khẩu</string>
+    <string name="confirm_password">Xác nhận mật khẩu</string>
     <string name="forgot_password">Quên mật khẩu?</string>
     <string name="login">Đăng nhập</string>
+    <string name="signup">Đăng ký</string>
     <string name="continue_with">Hoặc tiếp tục với</string>
     <string name="login_apple">Đăng nhập bằng Apple</string>
     <string name="login_google">Đăng nhập bằng Google</string>
     <string name="login_spotify">Đăng nhập bằng Spotify</string>
     <string name="signup_prompt">Chưa có tài khoản? Đăng ký ngay</string>
+    <string name="login_prompt">Đã có tài khoản? Đăng nhập</string>
+    <string name="invalid_email">Email không hợp lệ</string>
+    <string name="password_too_short">Mật khẩu phải có ít nhất 6 ký tự</string>
+    <string name="password_mismatch">Mật khẩu xác nhận không khớp</string>
     <string name="time_format">%1$s / %2$s</string>
     <string name="view_count_format">▷
 %1$d</string>

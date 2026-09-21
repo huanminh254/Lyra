@@ -68,6 +68,7 @@
             android:src="@drawable/login_art" />
 
         <TextView
+            android:id="@+id/login_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
@@ -78,6 +79,7 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/login_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="18dp"
@@ -142,6 +144,39 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:hint="@string/password"
+                android:inputType="textPassword"
+                android:paddingStart="0dp"
+                android:paddingEnd="0dp"
+                android:textColor="@color/login_primary"
+                android:textColorHint="@color/login_muted"
+                android:textSize="14sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/login_confirm_password_layout"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            app:hintEnabled="false"
+            app:boxBackgroundColor="@color/white"
+            app:boxCornerRadiusBottomEnd="16dp"
+            app:boxCornerRadiusBottomStart="16dp"
+            app:boxCornerRadiusTopEnd="16dp"
+            app:boxCornerRadiusTopStart="16dp"
+            app:boxStrokeColor="@color/login_border"
+            app:boxStrokeWidth="1dp"
+            app:endIconMode="password_toggle"
+            app:endIconTint="@color/login_muted"
+            app:startIconDrawable="@drawable/ic_login_lock"
+            app:startIconTint="@color/login_muted">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/login_confirm_password"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:hint="@string/confirm_password"
                 android:inputType="textPassword"
                 android:paddingStart="0dp"
                 android:paddingEnd="0dp"
@@ -257,6 +292,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center"
             android:text="@string/signup_prompt"
             android:textColor="@color/login_secondary"

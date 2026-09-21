@@ -3,6 +3,7 @@ package com.devpro.sound.data.remote.datasource
 import com.devpro.sound.data.remote.model.LoginRequest
 import com.devpro.sound.data.remote.model.LoginResponse
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import kotlinx.coroutines.tasks.await
 
 class AuthRemoteDataSource (
@@ -25,7 +26,7 @@ class AuthRemoteDataSource (
                 userId = null,
                 email = null,
                 isSuccess = false,
-                message = exception.message
+                message = userMessage(exception)
             )
         }
     }
@@ -46,7 +47,7 @@ class AuthRemoteDataSource (
                 userId = null,
                 email = null,
                 isSuccess = false,
-                message = exception.message
+                message = userMessage(exception)
             )
         }
     }
@@ -65,8 +66,22 @@ class AuthRemoteDataSource (
                 userId = null,
                 email = email,
                 isSuccess = false,
-                message = exception.message
+                message = userMessage(exception)
             )
+        }
+    }
+
+    private fun userMessage(exception: Exception): String {
+        return when ((exception as? FirebaseAuthException)?.errorCode) {
+            "ERROR_INVALID_EMAIL" -> "Email không hợp lệ"
+            "ERROR_EMAIL_ALREADY_IN_USE" -> "Email này đã được đăng ký"
+            "ERROR_WEAK_PASSWORD" -> "Mật khẩu quá yếu, hãy dùng ít nhất 6 ký tự"
+            "ERROR_USER_NOT_FOUND",
+            "ERROR_WRONG_PASSWORD",
+            "ERROR_INVALID_CREDENTIAL" -> "Email hoặc mật khẩu không chính xác"
+            "ERROR_TOO_MANY_REQUESTS" -> "Có quá nhiều yêu cầu, hãy thử lại sau"
+            "ERROR_NETWORK_REQUEST_FAILED" -> "Không có kết nối mạng"
+            else -> exception.message ?: "Đã xảy ra lỗi xác thực"
         }
     }
 }

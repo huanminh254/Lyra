@@ -1,10 +1,12 @@
 package com.devpro.sound.ui.auth
 
 import android.os.Bundle
+import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.devpro.sound.R
@@ -17,6 +19,7 @@ class LoginFragment : Fragment() {
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
     private val viewModel: LoginViewModel by viewModels()
+    private var isRegisterMode = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentLoginBinding.inflate(inflater, container, false)
@@ -25,16 +28,10 @@ class LoginFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.loginSubmit.setOnClickListener {
-            readCredentials()?.let { (email, password) ->
-                viewModel.login(LoginRequest(email = email, password = password))
-            }
-        }
+        binding.loginSubmit.setOnClickListener { submitCredentials() }
 
         binding.loginSignup.setOnClickListener {
-            readCredentials()?.let { (email, password) ->
-                viewModel.register(LoginRequest(email = email, password = password))
-            }
+            setRegisterMode(!isRegisterMode)
         }
 
         binding.loginForgotPassword.setOnClickListener {
@@ -58,8 +55,11 @@ class LoginFragment : Fragment() {
         binding.loginGoogle.setOnClickListener(socialLoginNotAvailable)
         binding.loginSpotify.setOnClickListener(socialLoginNotAvailable)
 
+        setRegisterMode(false)
+
         viewModel.uiState.observe(viewLifecycleOwner) { state ->
             binding.loginSubmit.isEnabled = !state.isLoading
+            binding.loginSignup.isEnabled = !state.isLoading
 
             if (state.message.isNotBlank()) {
                 Toast.makeText(
@@ -82,16 +82,58 @@ class LoginFragment : Fragment() {
         binding.loginEmailLayout.error = null
         binding.loginPasswordLayout.error = null
 
-        if (email.isBlank()) {
-            binding.loginEmailLayout.error = "Vui lòng nhập email"
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            binding.loginEmailLayout.error = getString(R.string.invalid_email)
             return null
         }
 
-        if (password.isBlank()) {
-            binding.loginPasswordLayout.error = "Vui lòng nhập mật khẩu"
+        if (password.length < MIN_PASSWORD_LENGTH) {
+            binding.loginPasswordLayout.error = getString(R.string.password_too_short)
             return null
         }
 
         return email to password
+    }
+
+    private fun submitCredentials() {
+        readCredentials()?.let { (email, password) ->
+            if (isRegisterMode) {
+                val confirmPassword = binding.loginConfirmPassword.text?.toString().orEmpty()
+                if (password != confirmPassword) {
+                    binding.loginConfirmPasswordLayout.error = getString(R.string.password_mismatch)
+                    return
+                }
+
+                viewModel.register(LoginRequest(email = email, password = password))
+            } else {
+                viewModel.login(LoginRequest(email = email, password = password))
+            }
+        }
+    }
+
+    private fun setRegisterMode(registerMode: Boolean) {
+        isRegisterMode = registerMode
+        binding.loginTitle.setText(
+            if (registerMode) R.string.create_account else R.string.welcome_back
+        )
+        binding.loginSubtitle.setText(
+            if (registerMode) R.string.register_subtitle else R.string.login_subtitle
+        )
+        binding.loginSubmit.setText(
+            if (registerMode) R.string.signup else R.string.login
+        )
+        binding.loginSignup.setText(
+            if (registerMode) R.string.login_prompt else R.string.signup_prompt
+        )
+        binding.loginForgotPassword.isVisible = !registerMode
+        binding.loginConfirmPasswordLayout.isVisible = registerMode
+        binding.loginEmailLayout.error = null
+        binding.loginPasswordLayout.error = null
+        binding.loginConfirmPasswordLayout.error = null
+        if (!registerMode) binding.loginConfirmPassword.text?.clear()
+    }
+
+    private companion object {
+        const val MIN_PASSWORD_LENGTH = 6
     }
 }

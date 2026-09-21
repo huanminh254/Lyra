@@ -39,6 +39,7 @@ class MainActivity () : AppCompatActivity() {
     private val viewModel: NowPlayingViewModel by viewModels()
     private lateinit var miniPlayer: MiniPlayerBinder
     private var miniPlayerMarginAnimator: ValueAnimator? = null
+    private var loadedAuthUserId: String? = null
     private enum class NavigationTab(val iconRes: Int) {
         DISCOVER(R.drawable.ic_music_note),
         FAVORITES(R.drawable.ic_favorite),
@@ -62,8 +63,14 @@ class MainActivity () : AppCompatActivity() {
 
     private val authStateListener = FirebaseAuth.AuthStateListener { auth ->
         if (auth.currentUser == null) {
+            loadedAuthUserId = null
             showRoot(LoginFragment())
         } else {
+            val userId = auth.currentUser?.uid
+            if (userId != null && userId != loadedAuthUserId) {
+                loadedAuthUserId = userId
+                viewModel.refreshSongs()
+            }
             val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
             if (currentFragment is LoginFragment) {
                 showRoot(DiscoverFragment())
