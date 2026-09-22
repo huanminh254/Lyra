@@ -1,6 +1,8 @@
 package com.devpro.sound.data.remote.datasource
 
+import android.net.Uri
 import com.devpro.sound.data.remote.model.UserEntity
+import com.devpro.sound.data.remote.storage.SupabaseStorageClient
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -9,7 +11,8 @@ import kotlinx.coroutines.tasks.await
 
 class UserRemoteDataSource(
     private val firestore: FirebaseFirestore,
-    private val firebaseAuth: FirebaseAuth
+    private val firebaseAuth: FirebaseAuth,
+    private val supabaseStorageClient: SupabaseStorageClient
 ) {
     suspend fun getCurrentUser(): UserEntity {
         val userId = requireUserId()
@@ -33,6 +36,17 @@ class UserRemoteDataSource(
 
     suspend fun removeFavoriteSong(songId: String) {
         updateSongList("favoriteSongIds", FieldValue.arrayRemove(songId))
+    }
+
+    suspend fun updateAvatar(uri: Uri): String {
+        val userId = requireUserId()
+        val avatarUrl = supabaseStorageClient.uploadAvatar(userId, uri)
+        firestore
+            .collection(USERS_COLLECTION)
+            .document(userId)
+            .set(mapOf("avatarUrl" to avatarUrl), SetOptions.merge())
+            .await()
+        return avatarUrl
     }
 
     private suspend fun updateSongList(field: String, value: Any) {

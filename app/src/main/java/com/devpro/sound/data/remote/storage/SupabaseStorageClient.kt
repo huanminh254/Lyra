@@ -38,6 +38,22 @@ class SupabaseStorageClient @Inject constructor(
         uri = uri
     )
 
+    suspend fun uploadAvatar(
+        ownerId: String,
+        uri: Uri
+    ): String {
+        require(contentResolver.getType(uri)?.startsWith("image/") == true) {
+            "Avatar phải là file ảnh"
+        }
+
+        return upload(
+            bucket = BuildConfig.SUPABASE_COVER_BUCKET,
+            path = "${BuildConfig.SUPABASE_COVER_PREFIX}/$ownerId/avatar-" +
+                "${System.currentTimeMillis()}.${extensionFor(uri, "jpg")}",
+            uri = uri
+        )
+    }
+
     private suspend fun upload(
         bucket: String,
         path: String,
