@@ -1,11 +1,14 @@
 package com.devpro.sound.data.repository.impl
 
+import android.net.Uri
 import com.devpro.sound.data.remote.datasource.UserRemoteDataSource
 import com.devpro.sound.data.repository.UserRepository
 
 class UserRepositoryImpl(
     private val userRemoteDataSource: UserRemoteDataSource
 ) : UserRepository {
+
+    override suspend fun getCurrentUser() = userRemoteDataSource.getCurrentUser()
 
     override suspend fun getFavoriteSongIds(): List<String> {
         return userRemoteDataSource.getFavoriteSongIds()
@@ -17,6 +20,10 @@ class UserRepositoryImpl(
 
     override suspend fun removeFavoriteSong(songId: String) {
         userRemoteDataSource.removeFavoriteSong(songId)
+    }
+
+    override suspend fun updateAvatar(uri: Uri): String {
+        return userRemoteDataSource.updateAvatar(uri)
     }
 
 }
