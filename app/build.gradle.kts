@@ -87,8 +87,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.appcompat)
     implementation(libs.coil)
     implementation(libs.coil.network.okhttp)

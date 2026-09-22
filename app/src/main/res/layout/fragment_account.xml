@@ -1,51 +1,353 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.devpro.sound.ui.components.PullToRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/account_refresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
-    android:fillViewport="true">
+    android:background="@color/white">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:paddingBottom="96dp"
+        android:scrollbars="none"
+        tools:ignore="HardcodedText">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="32dp">
+        android:paddingStart="24dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="32dp">
 
-        <ImageView
-            android:id="@+id/account_avatar"
-            android:layout_width="128dp"
-            android:layout_height="128dp"
-            android:contentDescription="@string/account_avatar_description"
-            android:scaleType="centerCrop"
-            android:src="@drawable/account" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/account_back"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:background="@drawable/profile_action_background"
+                android:contentDescription="@string/back"
+                android:padding="13dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/back"
+                app:tint="@color/black" />
+
+            <ImageView
+                android:id="@+id/account_header_avatar"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_marginStart="16dp"
+                android:background="@drawable/comment_avatar_background"
+                android:clipToOutline="true"
+                android:contentDescription="@string/account_avatar_description"
+                android:outlineProvider="background"
+                android:padding="2dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/account" />
+
+            <TextView
+                android:id="@+id/account_header_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Huấn Minh"
+                android:textColor="@color/black"
+                android:textSize="21sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/account_cast"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:background="@drawable/profile_action_background"
+                android:contentDescription="@string/nav_secondary"
+                android:padding="15dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_share"
+                app:tint="@color/black" />
+
+            <ImageButton
+                android:id="@+id/account_more"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_marginStart="12dp"
+                android:background="@drawable/profile_action_background"
+                android:contentDescription="@string/nav_secondary"
+                android:padding="16dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/more"
+                app:tint="@color/black" />
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="168dp"
+            android:layout_height="168dp"
+            android:layout_marginTop="24dp"
+            android:clipChildren="false">
+
+            <ImageView
+                android:id="@+id/account_avatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/comment_avatar_background"
+                android:clipToOutline="true"
+                android:contentDescription="@string/account_avatar_description"
+                android:outlineProvider="background"
+                android:padding="3dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/account" />
+
+            <ImageButton
+                android:id="@+id/account_avatar_add"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_gravity="bottom|end"
+                android:background="@drawable/avatar_add_background"
+                android:contentDescription="@string/account_avatar_add_description"
+                android:padding="11dp"
+                android:src="@drawable/ic_add"
+                app:tint="@color/white" />
+        </FrameLayout>
 
         <TextView
+            android:id="@+id/account_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="@string/account_label"
+            android:text="Huấn Minh"
             android:textColor="@color/black"
-            android:textSize="28sp"
+            android:textSize="32sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/account_email"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textColor="@color/muted_text"
-            android:textSize="16sp" />
+            android:layout_marginTop="6dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="#FF777777"
+            android:textSize="16sp"
+            tools:text="huan@example.com" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/account_following_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/black"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    tools:text="27" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/following"
+                    android:textColor="#FF777777"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/account_followers_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/black"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    tools:text="30" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/followers"
+                    android:textColor="#FF777777"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/account_likes_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/black"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    tools:text="51" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/likes"
+                    android:textColor="#FF777777"
+                    android:textSize="16sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:layout_marginTop="24dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/account_edit"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:background="@drawable/profile_action_background"
+                android:contentDescription="Chỉnh sửa thông tin cá nhân"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="＋  Add bio"
+                android:textColor="@color/black"
+                android:textSize="17sp" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/account_shuffle"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="12dp"
+                android:contentDescription="Phát ngẫu nhiên"
+                android:gravity="center"
+                android:text="⇄"
+                android:textColor="#FF555555"
+                android:textSize="32sp" />
+
+            <ImageButton
+                android:id="@+id/account_play"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/play_circle_background"
+                android:contentDescription="@string/play_song"
+                android:padding="21dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/resume"
+                app:tint="@color/black" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="Playlists"
+            android:textColor="@color/black"
+            android:textSize="30sp"
+            android:textStyle="bold" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/account_playlists"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:nestedScrollingEnabled="false"
+            android:overScrollMode="never"
+            tools:listitem="@layout/item_account_playlist" />
+
+        <TextView
+            android:id="@+id/account_playlists_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Chưa có playlist"
+            android:textColor="#FFBDBDBD"
+            android:textSize="16sp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="38dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Likes"
+                android:textColor="@color/black"
+                android:textSize="30sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/account_likes_see_all"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:minHeight="0dp"
+                android:text="See All"
+                android:textAllCaps="false"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                app:backgroundTint="#FFF0F0F0"
+                app:cornerRadius="22dp" />
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/account_likes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:nestedScrollingEnabled="false"
+            android:overScrollMode="never"
+            tools:listitem="@layout/item_account_song" />
+
+        <TextView
+            android:id="@+id/account_likes_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Chưa có bài hát yêu thích"
+            android:textColor="#FF777777"
+            android:textSize="16sp"
+            android:visibility="gone" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/account_logout"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="40dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="32dp"
             android:text="@string/logout"
             android:textAllCaps="false"
             android:textColor="@color/white"
-            app:backgroundTint="@color/black" />
+            app:backgroundTint="#FF333333"
+            app:cornerRadius="26dp" />
     </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</com.devpro.sound.ui.components.PullToRefreshLayout>

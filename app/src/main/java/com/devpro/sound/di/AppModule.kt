@@ -132,9 +132,11 @@ object AppModule {
     @Provides
     @Singleton
     fun provideUserRemoteDataSource(
-        firestore: FirebaseFirestore, firebaseAuth: FirebaseAuth
+        firestore: FirebaseFirestore,
+        firebaseAuth: FirebaseAuth,
+        supabaseStorageClient: SupabaseStorageClient
     ) : UserRemoteDataSource{
-        return UserRemoteDataSource(firestore, firebaseAuth)
+        return UserRemoteDataSource(firestore, firebaseAuth, supabaseStorageClient)
     }
     @Provides
     @Singleton
