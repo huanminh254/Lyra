@@ -47,6 +47,7 @@ class NowPlayingViewModel @Inject constructor(
     val currentComments: StateFlow<List<Comment>> = _currentComments.asStateFlow()
 
     private var playableSongs: List<Song> = emptyList()
+    private var songsJob: Job? = null
     private var progressJob: Job? = null
     private var commentsJob: Job? = null
     private var currentCommentSongId: String? = null
@@ -58,10 +59,27 @@ class NowPlayingViewModel @Inject constructor(
 
     init {
         observePlayerState()
-        loadSongs()
+        loadSongs(preservePlayback = false)
     }
-    private fun loadSongs() {
-        viewModelScope.launch {
+
+    private fun loadSongs(preservePlayback: Boolean) {
+        songsJob?.cancel()
+        updateState {
+            it.copy(
+                isLoading = !preservePlayback,
+                isRefreshing = preservePlayback,
+                errorMessage = null
+            )
+        }
+
+        songsJob = viewModelScope.launch {
+            val previousState = _uiState.value ?: NowPlayingUiState()
+            val previousSongId = previousState.song?.id
+            val hadCurrentMedia = audioPlayer.hasCurrentSong()
+            val wasPlaying = audioPlayer.isPlaying()
+            val previousPositionMs = audioPlayer.getCurrentPosition().coerceAtLeast(0L)
+            val previousDurationMs = audioPlayer.getDuration().coerceAtLeast(0L)
+
             runCatching {
                 songRepository.getSongs()
             }.onSuccess { songs ->
@@ -69,38 +87,90 @@ class NowPlayingViewModel @Inject constructor(
                     userRepository.getFavoriteSongIds()
                 }.getOrDefault(emptyList())
 
-                playableSongs = songs.filter {
+                val refreshedPlayableSongs = songs.filter {
                     !it.audioUrl.isNullOrBlank()
                 }
+                val previousAudioUrls = playableSongs.mapNotNull { it.audioUrl }
+                val refreshedAudioUrls = refreshedPlayableSongs.mapNotNull { it.audioUrl }
+                val playlistChanged = previousAudioUrls != refreshedAudioUrls
+                playableSongs = refreshedPlayableSongs
 
-                audioPlayer.setPlayList(
-                    playableSongs.mapNotNull { it.audioUrl }
-                )
+                if (!preservePlayback || playlistChanged) {
+                    audioPlayer.setPlayList(refreshedAudioUrls)
+                }
 
-                val firstSong = playableSongs.firstOrNull()
-                _likeCount.value = if (firstSong != null && firstSong.id in favoriteSongIds) {
+                val selectedSong = (if (preservePlayback && previousSongId != null) {
+                    songs.firstOrNull { it.id == previousSongId }
+                } else {
+                    null
+                }) ?: playableSongs.firstOrNull()
+                val restoredSongIndex = playableSongs.indexOfFirst { it.id == previousSongId }
+                val shouldRestorePlayback = preservePlayback &&
+                    playlistChanged &&
+                    hadCurrentMedia &&
+                    restoredSongIndex >= 0
+                val canKeepCurrentPlayback = preservePlayback &&
+                    !playlistChanged &&
+                    hadCurrentMedia &&
+                    previousSongId == selectedSong?.id
+
+                if (shouldRestorePlayback) {
+                    audioPlayer.playAt(restoredSongIndex)
+                    audioPlayer.seekTo(previousPositionMs)
+                    if (!wasPlaying) audioPlayer.pause()
+                }
+
+                _likeCount.value = if (selectedSong != null && selectedSong.id in favoriteSongIds) {
                     1
                 } else {
                     0
                 }
                 _commentCount.value = 0
+                val restoredProgress = if (shouldRestorePlayback && previousDurationMs > 0L) {
+                    (previousPositionMs.toFloat() / previousDurationMs.toFloat()).coerceIn(0f, 1f)
+                } else if (canKeepCurrentPlayback) {
+                    previousState.progress
+                } else {
+                    0f
+                }
+                _playbackProgress.value = restoredProgress
 
                 updateState {
                     it.copy(
                         songs = songs,
-                        song = firstSong,
+                        song = selectedSong,
                         favoriteSongs = songs.filter { it.id in favoriteSongIds },
                         isLoading = false,
+                        isRefreshing = false,
+                        isPlaying = when {
+                            shouldRestorePlayback -> wasPlaying
+                            canKeepCurrentPlayback -> previousState.isPlaying
+                            else -> false
+                        },
+                        currentPositionMs = when {
+                            shouldRestorePlayback -> previousPositionMs
+                            canKeepCurrentPlayback -> previousState.currentPositionMs
+                            else -> 0L
+                        },
+                        durationMs = when {
+                            shouldRestorePlayback -> previousDurationMs
+                            canKeepCurrentPlayback -> previousState.durationMs
+                            else -> 0L
+                        },
+                        progress = restoredProgress,
                         errorMessage = null
                     )
                 }
-                observeCommentsForSong(playableSongs.firstOrNull()?.id)
+                if (!preservePlayback || previousSongId != selectedSong?.id) {
+                    observeCommentsForSong(selectedSong?.id)
+                }
             }.onFailure { error ->
                 _likeCount.value = 0
                 _commentCount.value = 0
                 updateState {
                     it.copy(
                         isLoading = false,
+                        isRefreshing = false,
                         errorMessage = error.message
                             ?: "Không tải được bài hát"
                     )
@@ -110,7 +180,7 @@ class NowPlayingViewModel @Inject constructor(
     }
 
     fun refreshSongs() {
-        loadSongs()
+        loadSongs(preservePlayback = true)
     }
 
     fun onPlayPauseClick() {

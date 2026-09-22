@@ -101,6 +101,7 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.swiperefreshlayout)
 
     testImplementation(libs.junit)
     testImplementation(libs.androidx.arch.core.testing)

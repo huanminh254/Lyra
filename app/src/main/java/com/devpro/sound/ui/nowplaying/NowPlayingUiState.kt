@@ -8,6 +8,7 @@ data class NowPlayingUiState(
     val favoriteSongs: List<Song> = emptyList(),
     val isBuffering: Boolean = false,
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val errorMessage: String? = null,
     val isPlaying: Boolean = false,
     val currentPositionMs: Long = 0L,

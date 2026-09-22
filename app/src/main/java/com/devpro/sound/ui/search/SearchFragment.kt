@@ -1,5 +1,6 @@
 package com.devpro.sound.ui.search
 
+import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -33,6 +34,8 @@ class SearchFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.searchRefresh.setIndicatorColor(Color.BLACK)
+        binding.searchRefresh.setOnPullToRefreshListener(viewModel::refreshSongs)
         adapter = SongAdapter { song ->
             viewModel.onSongClick(song)
             openNowPlaying()
@@ -50,6 +53,7 @@ class SearchFragment : Fragment() {
         viewModel.uiState.observe(viewLifecycleOwner) { state ->
             allSongs = state.songs
             renderResults(binding.searchInput.text?.toString().orEmpty())
+            if (!state.isRefreshing) binding.searchRefresh.finishRefresh()
         }
     }
 
