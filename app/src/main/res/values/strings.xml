@@ -4,6 +4,8 @@
     <string name="nav_secondary">Nút phụ</string>
     <string name="account_label">Tài khoản</string>
     <string name="account_avatar_description">Ảnh đại diện tài khoản</string>
+    <string name="account_avatar_add_description">Đổi ảnh đại diện</string>
+    <string name="close">Đóng</string>
     <string name="logout">Đăng xuất</string>
     <string name="discover">Discover</string>
     <string name="search">Search</string>
@@ -68,6 +70,11 @@
 193</string>
     <string name="feature_in_development">Tính năng đang được phát triển</string>
     <string name="social_login_unavailable">Đăng nhập mạng xã hội chưa được hỗ trợ</string>
+    <string name="account_song_meta">%1$d lượt nghe · %2$s</string>
+    <string name="account_following_summary">%1$d Followers · %2$d Following</string>
+    <string name="following">Following</string>
+    <string name="followers">Followers</string>
+    <string name="likes">Likes</string>
     <plurals name="favorite_track_count">
         <item quantity="one">%d track</item>
         <item quantity="other">%d tracks</item>

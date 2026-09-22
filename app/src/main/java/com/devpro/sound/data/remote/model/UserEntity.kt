@@ -10,5 +10,6 @@ data class UserEntity(
     val cacheSubtitle: String = "",
     val appVersion: String = "",
     val uploadedSongIds: List<String> = emptyList(),
-    val favoriteSongIds: List<String> = emptyList()
+    val favoriteSongIds: List<String> = emptyList(),
+    val avatarUrl: String = ""
 )
