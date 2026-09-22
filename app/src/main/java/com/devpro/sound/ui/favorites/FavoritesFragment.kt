@@ -1,5 +1,6 @@
 package com.devpro.sound.ui.favorites
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -27,6 +28,8 @@ class FavoritesFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        binding.favoritesRefresh.setIndicatorColor(Color.BLACK)
+        binding.favoritesRefresh.setOnPullToRefreshListener(viewModel::refreshSongs)
         adapter = SongAdapter { song ->
             viewModel.onSongClick(song)
             parentFragmentManager
@@ -45,6 +48,7 @@ class FavoritesFragment : Fragment() {
                 songs.size,
                 songs.size
             )
+            if (!state.isRefreshing) binding.favoritesRefresh.finishRefresh()
         }
     }
 

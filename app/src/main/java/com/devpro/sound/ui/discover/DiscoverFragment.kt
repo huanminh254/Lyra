@@ -1,5 +1,6 @@
 package com.devpro.sound.ui.discover
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -32,6 +33,8 @@ class DiscoverFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.discoverRefresh.setIndicatorColor(Color.BLACK)
+        binding.discoverRefresh.setOnPullToRefreshListener(viewModel::refreshSongs)
         binding.discoverSearch.setOnClickListener {
             openFragment(SearchFragment())
         }
@@ -73,6 +76,7 @@ class DiscoverFragment : Fragment() {
             binding.discoverLoading.visibility = if(state.isLoading) View.VISIBLE else View.GONE
             binding.discoverError.visibility = if(state.errorMessage != null) View.VISIBLE else View.GONE
             binding.discoverError.text = state.errorMessage
+            if (!state.isRefreshing) binding.discoverRefresh.finishRefresh()
             featuredSongAdapter.updatePlaybackState(state.song?.id, state.isPlaying)
             popularSongAdapter.updatePlaybackState(state.song?.id, state.isPlaying)
         }
