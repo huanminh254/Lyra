@@ -6,6 +6,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.devpro.sound.databinding.ActivityMainBinding
@@ -86,6 +87,25 @@ class MainActivity () : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (supportFragmentManager.backStackEntryCount > 0) {
+                        supportFragmentManager.popBackStack()
+                        return
+                    }
+
+                    val current = supportFragmentManager.findFragmentById(R.id.fragment_container)
+                    if (isAuthenticated() && current !is DiscoverFragment) {
+                        navigateToDiscover()
+                    } else {
+                        finish()
+                    }
+                }
+            }
+        )
+
         radialItems = mutableListOf(
             RadialItem(binding.menuToggle1, NavigationTab.FAVORITES),
             RadialItem(binding.menuToggle2, NavigationTab.DOWNLOADS),
@@ -145,7 +165,10 @@ class MainActivity () : AppCompatActivity() {
         miniPlayer = MiniPlayerBinder(
             root = binding.mainMiniPlayer.root,
             onOpen = {
-                showRoot(NowPlayingFragment())
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, NowPlayingFragment())
+                    .addToBackStack("now_playing")
+                    .commit()
             },
             onPlayPause = viewModel::onPlayPauseClick,
             onFavorite = viewModel::toggleFavorite

@@ -19,7 +19,6 @@ import android.util.TypedValue
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -60,17 +59,8 @@ class NowPlayingFragment : Fragment() {
         lastRenderedPlaying = null
         lastRenderedFavorite = null
 
-        requireActivity().onBackPressedDispatcher.addCallback(
-            viewLifecycleOwner,
-            object : OnBackPressedCallback(true) {
-                override fun handleOnBackPressed() {
-                    (requireActivity() as? MainActivity)?.navigateToDiscover()
-                }
-            }
-        )
-
         binding.nowPlayingBack.setOnClickListener {
-            (requireActivity() as? MainActivity)?.navigateToDiscover()
+            requireActivity().onBackPressedDispatcher.onBackPressed()
         }
         binding.nowPlayingMore.setOnClickListener {
             Toast.makeText(
