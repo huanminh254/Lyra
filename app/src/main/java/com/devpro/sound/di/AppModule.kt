@@ -92,9 +92,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAuthRemoteDataSource(
-        firebaseAuth: FirebaseAuth
+        firebaseAuth: FirebaseAuth,
+        firestore: FirebaseFirestore
     ): AuthRemoteDataSource {
-        return AuthRemoteDataSource(firebaseAuth)
+        return AuthRemoteDataSource(firebaseAuth, firestore)
     }
 
     @Provides

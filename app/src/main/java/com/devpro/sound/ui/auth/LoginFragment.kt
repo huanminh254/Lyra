@@ -13,6 +13,7 @@ import com.devpro.sound.R
 import com.devpro.sound.data.remote.model.LoginRequest
 import com.devpro.sound.databinding.FragmentLoginBinding
 import dagger.hilt.android.AndroidEntryPoint
+import kotlin.math.roundToInt
 
 @AndroidEntryPoint
 class LoginFragment : Fragment() {
@@ -98,13 +99,26 @@ class LoginFragment : Fragment() {
     private fun submitCredentials() {
         readCredentials()?.let { (email, password) ->
             if (isRegisterMode) {
+                val name = binding.loginName.text?.toString()?.trim().orEmpty()
+                binding.loginNameLayout.error = null
+                if (name.isBlank()) {
+                    binding.loginNameLayout.error = getString(R.string.name_required)
+                    return
+                }
+
                 val confirmPassword = binding.loginConfirmPassword.text?.toString().orEmpty()
                 if (password != confirmPassword) {
                     binding.loginConfirmPasswordLayout.error = getString(R.string.password_mismatch)
                     return
                 }
 
-                viewModel.register(LoginRequest(email = email, password = password))
+                viewModel.register(
+                    LoginRequest(
+                        email = email,
+                        password = password,
+                        name = name
+                    )
+                )
             } else {
                 viewModel.login(LoginRequest(email = email, password = password))
             }
@@ -126,14 +140,27 @@ class LoginFragment : Fragment() {
             if (registerMode) R.string.login_prompt else R.string.signup_prompt
         )
         binding.loginForgotPassword.isVisible = !registerMode
+        binding.loginNameLayout.isVisible = registerMode
         binding.loginConfirmPasswordLayout.isVisible = registerMode
+        (binding.loginEmailLayout.layoutParams as? ViewGroup.MarginLayoutParams)?.let { params ->
+            params.topMargin = dp(if (registerMode) 12 else 48)
+            binding.loginEmailLayout.layoutParams = params
+        }
         binding.loginEmailLayout.error = null
         binding.loginPasswordLayout.error = null
+        binding.loginNameLayout.error = null
         binding.loginConfirmPasswordLayout.error = null
-        if (!registerMode) binding.loginConfirmPassword.text?.clear()
+        if (!registerMode) {
+            binding.loginName.text?.clear()
+            binding.loginConfirmPassword.text?.clear()
+        }
     }
 
     private companion object {
         const val MIN_PASSWORD_LENGTH = 6
+    }
+
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).roundToInt()
     }
 }

@@ -45,6 +45,8 @@
     <string name="create_account">Tạo tài khoản</string>
     <string name="register_subtitle">Bắt đầu hành trình âm nhạc của bạn</string>
     <string name="email_or_phone">Email</string>
+    <string name="display_name">Tên hiển thị</string>
+    <string name="name_required">Vui lòng nhập tên hiển thị</string>
     <string name="password">Mật khẩu</string>
     <string name="confirm_password">Xác nhận mật khẩu</string>
     <string name="forgot_password">Quên mật khẩu?</string>
