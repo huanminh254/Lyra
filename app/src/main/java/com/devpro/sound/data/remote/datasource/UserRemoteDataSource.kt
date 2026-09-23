@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.auth.UserProfileChangeRequest
 import kotlinx.coroutines.tasks.await
 
 class UserRemoteDataSource(
@@ -15,7 +16,10 @@ class UserRemoteDataSource(
     private val supabaseStorageClient: SupabaseStorageClient
 ) {
     suspend fun getCurrentUser(): UserEntity {
-        val userId = requireUserId()
+        return getUser(requireUserId())
+    }
+
+    suspend fun getUser(userId: String): UserEntity {
         return firestore
             .collection("users")
             .document(userId)
@@ -31,30 +35,92 @@ class UserRemoteDataSource(
     }
 
     suspend fun addFavoriteSong(songId: String) {
-        updateSongList("favoriteSongIds", FieldValue.arrayUnion(songId))
+        updateFavoriteSong(songId, add = true)
     }
 
     suspend fun removeFavoriteSong(songId: String) {
-        updateSongList("favoriteSongIds", FieldValue.arrayRemove(songId))
+        updateFavoriteSong(songId, add = false)
     }
 
     suspend fun updateAvatar(uri: Uri): String {
         val userId = requireUserId()
         val avatarUrl = supabaseStorageClient.uploadAvatar(userId, uri)
-        firestore
-            .collection(USERS_COLLECTION)
-            .document(userId)
-            .set(mapOf("avatarUrl" to avatarUrl), SetOptions.merge())
-            .await()
-        return avatarUrl
+        return try {
+            firestore
+                .collection(USERS_COLLECTION)
+                .document(userId)
+                .set(mapOf("avatarUrl" to avatarUrl), SetOptions.merge())
+                .await()
+            avatarUrl
+        } catch (exception: Exception) {
+            runCatching { supabaseStorageClient.deleteObject(avatarUrl) }
+            throw exception
+        }
     }
 
-    private suspend fun updateSongList(field: String, value: Any) {
+    suspend fun updateName(name: String) {
+        val normalizedName = name.trim()
+        require(normalizedName.isNotBlank()) { "Tên hiển thị không được để trống" }
+
+        val user = firebaseAuth.currentUser
+            ?: throw IllegalStateException("Người dùng chưa đăng nhập")
+
+        user.updateProfile(
+            UserProfileChangeRequest.Builder()
+                .setDisplayName(normalizedName)
+                .build()
+        ).await()
+
         firestore
             .collection(USERS_COLLECTION)
-            .document(requireUserId())
-            .set(mapOf(field to value), SetOptions.merge())
+            .document(user.uid)
+            .set(mapOf("name" to normalizedName), SetOptions.merge())
             .await()
+    }
+
+    private suspend fun updateFavoriteSong(songId: String, add: Boolean) {
+        val userId = requireUserId()
+        val userReference = firestore
+            .collection(USERS_COLLECTION)
+            .document(userId)
+        val songReference = firestore
+            .collection(SONGS_COLLECTION)
+            .document(songId)
+
+        firestore.runTransaction { transaction ->
+            val userSnapshot = transaction.get(userReference)
+            val songSnapshot = transaction.get(songReference)
+            val favoriteSongIds = (userSnapshot.get(FAVORITE_SONG_IDS_FIELD) as? List<*>)
+                .orEmpty()
+                .filterIsInstance<String>()
+            val isFavorite = songId in favoriteSongIds
+
+            if (add && !isFavorite) {
+                transaction.set(
+                    userReference,
+                    mapOf(FAVORITE_SONG_IDS_FIELD to FieldValue.arrayUnion(songId)),
+                    SetOptions.merge()
+                )
+                val favoriteCount = songSnapshot.getLong(FAVORITE_COUNT_FIELD) ?: 0L
+                transaction.update(
+                    songReference,
+                    FAVORITE_COUNT_FIELD,
+                    favoriteCount + 1L
+                )
+            } else if (!add && isFavorite) {
+                transaction.set(
+                    userReference,
+                    mapOf(FAVORITE_SONG_IDS_FIELD to FieldValue.arrayRemove(songId)),
+                    SetOptions.merge()
+                )
+                val favoriteCount = songSnapshot.getLong(FAVORITE_COUNT_FIELD) ?: 0L
+                transaction.update(
+                    songReference,
+                    FAVORITE_COUNT_FIELD,
+                    (favoriteCount - 1L).coerceAtLeast(0L)
+                )
+            }
+        }.await()
     }
 
     private fun requireUserId(): String {
@@ -64,5 +130,8 @@ class UserRemoteDataSource(
 
     private companion object {
         const val USERS_COLLECTION = "users"
+        const val SONGS_COLLECTION = "songs"
+        const val FAVORITE_SONG_IDS_FIELD = "favoriteSongIds"
+        const val FAVORITE_COUNT_FIELD = "favoriteCount"
     }
 }

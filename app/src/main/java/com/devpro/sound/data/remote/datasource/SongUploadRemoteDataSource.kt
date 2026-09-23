@@ -22,34 +22,47 @@ class SongUploadRemoteDataSource(
 
         val songReference = firestore.collection(SONGS_COLLECTION).document()
         val songId = songReference.id
-        val audioUrl = supabaseStorageClient.uploadAudio(
-            ownerId = ownerId,
-            songId = songId,
-            uri = request.audioUri
-        )
+        var audioUrl: String? = null
+        var coverUrl: String? = null
 
-        val coverUrl = request.coverUri?.let { coverUri ->
-            supabaseStorageClient.uploadCover(
+        return try {
+            audioUrl = supabaseStorageClient.uploadAudio(
                 ownerId = ownerId,
                 songId = songId,
-                uri = coverUri
+                uri = request.audioUri
             )
-        }.orEmpty()
 
-        val song = SongEntity(
-            id = songId,
-            title = request.title,
-            artist = request.artist,
-            audioUrl = audioUrl,
-            coverUrl = coverUrl,
-            ownerId = ownerId,
-            viewCount = 0L,
-            waveform = waveform.map(Float::toDouble)
-        )
+            coverUrl = request.coverUri?.let { coverUri ->
+                supabaseStorageClient.uploadCover(
+                    ownerId = ownerId,
+                    songId = songId,
+                    uri = coverUri
+                )
+            }
 
-        songReference.set(song).await()
+            val song = SongEntity(
+                id = songId,
+                title = request.title,
+                artist = request.artist,
+                audioUrl = audioUrl.orEmpty(),
+                coverUrl = coverUrl.orEmpty(),
+                ownerId = ownerId,
+                viewCount = 0L,
+                waveform = waveform.map(Float::toDouble)
+            )
 
-        return song
+            songReference.set(song).await()
+            song
+        } catch (exception: Exception) {
+            runCatching { songReference.delete().await() }
+            coverUrl?.let { url ->
+                runCatching { supabaseStorageClient.deleteObject(url) }
+            }
+            audioUrl?.let { url ->
+                runCatching { supabaseStorageClient.deleteObject(url) }
+            }
+            throw exception
+        }
     }
 
     private companion object {
