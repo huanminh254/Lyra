@@ -45,6 +45,7 @@ class SongUploadRemoteDataSource(
             audioUrl = audioUrl,
             coverUrl = coverUrl,
             ownerId = ownerId,
+            viewCount = 0L,
             waveform = waveform.map(Float::toDouble)
         )
 

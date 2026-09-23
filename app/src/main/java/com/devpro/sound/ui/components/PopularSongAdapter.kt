@@ -97,10 +97,12 @@ class PopularSongAdapter(
                 song.viewCount
             )
             binding.featuredDownloadCount.text = binding.root.context.getString(
-                R.string.download_count_format
+                R.string.download_count_format,
+                song.downloadCount
             )
             binding.featuredFavoriteCount.text = binding.root.context.getString(
-                R.string.favorite_count_format_static
+                R.string.favorite_count_format_static,
+                song.favoriteCount
             )
             binding.featuredPlay.setImageResource(
                 if (currentSongId == song.id && isPlaying) R.drawable.pause else R.drawable.resume

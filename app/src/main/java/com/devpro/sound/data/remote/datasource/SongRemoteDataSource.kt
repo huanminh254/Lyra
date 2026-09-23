@@ -4,6 +4,7 @@ import com.devpro.sound.data.remote.model.SongEntity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 
 class SongRemoteDataSource(
@@ -11,15 +12,33 @@ class SongRemoteDataSource(
     private val firebaseAuth: FirebaseAuth
 ) {
     suspend fun getSongs(): List<SongEntity> {
-        return firestore
+        val documents = firestore
             .collection(SONGS_COLLECTION)
             .orderBy(SORT_ORDER_FIELD)
             .get()
             .await()
             .documents
-            .mapNotNull { document ->
-                document.toObject(SongEntity::class.java)?.copy(id = document.id)
+
+        val missingViewCountDocuments = documents.filterNot { document ->
+            document.contains(VIEW_COUNT_FIELD)
+        }
+        if (missingViewCountDocuments.isNotEmpty()) {
+            runCatching {
+                firestore.runBatch { batch ->
+                    missingViewCountDocuments.forEach { document ->
+                        batch.set(
+                            document.reference,
+                            mapOf(VIEW_COUNT_FIELD to 0L),
+                            SetOptions.merge()
+                        )
+                    }
+                }.await()
             }
+        }
+
+        return documents.mapNotNull { document ->
+            document.toObject(SongEntity::class.java)?.copy(id = document.id)
+        }
     }
 
     suspend fun recordView(songId: String): Boolean {

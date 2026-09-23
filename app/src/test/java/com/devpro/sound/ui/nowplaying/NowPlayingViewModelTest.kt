@@ -1,6 +1,8 @@
 package com.devpro.sound.ui.nowplaying
 
+import android.net.Uri
 import com.devpro.sound.data.model.Song
+import com.devpro.sound.data.remote.model.UserEntity
 import com.devpro.sound.data.repository.CommentRepository
 import com.devpro.sound.data.repository.SongRepository
 import com.devpro.sound.data.repository.UserRepository
@@ -104,9 +106,11 @@ class NowPlayingViewModelTest {
     }
 
     private class FakeUserRepository : UserRepository {
+        override suspend fun getCurrentUser(): UserEntity = UserEntity()
         override suspend fun getFavoriteSongIds(): List<String> = emptyList()
         override suspend fun addFavoriteSong(songId: String) = Unit
         override suspend fun removeFavoriteSong(songId: String) = Unit
+        override suspend fun updateAvatar(uri: Uri): String = ""
     }
 
     private class FakeCommentRepository : CommentRepository {
