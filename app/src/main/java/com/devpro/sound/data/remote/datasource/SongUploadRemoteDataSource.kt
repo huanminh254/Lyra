@@ -5,9 +5,7 @@ import com.devpro.sound.data.remote.model.SongEntity
 import com.devpro.sound.data.remote.model.UploadSongRequest
 import com.devpro.sound.data.remote.storage.SupabaseStorageClient
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 
 class SongUploadRemoteDataSource(
@@ -45,25 +43,16 @@ class SongUploadRemoteDataSource(
             audioUrl = audioUrl,
             coverUrl = coverUrl,
             ownerId = ownerId,
+            viewCount = 0L,
             waveform = waveform.map(Float::toDouble)
         )
 
         songReference.set(song).await()
-
-        firestore
-            .collection(USERS_COLLECTION)
-            .document(ownerId)
-            .set(
-                mapOf("uploadedSongIds" to FieldValue.arrayUnion(songId)),
-                SetOptions.merge()
-            )
-            .await()
 
         return song
     }
 
     private companion object {
         const val SONGS_COLLECTION = "songs"
-        const val USERS_COLLECTION = "users"
     }
 }

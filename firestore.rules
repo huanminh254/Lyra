@@ -11,7 +11,9 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isOwner(userId);
+      // Profiles opened from a song artist need to be readable by signed-in users.
+      // Writes remain restricted to the profile owner below.
+      allow read: if signedIn();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
@@ -22,14 +24,16 @@ service cloud.firestore {
           'darkModeEnabled',
           'cacheSubtitle',
           'appVersion',
-          'uploadedSongIds',
-          'favoriteSongIds'
+          'favoriteSongIds',
+          'avatarUrl'
         ]);
       allow delete: if isOwner(userId);
     }
 
     match /songs/{songId} {
-      allow read: if signedIn();
+      // Song metadata is public so Discover can load before auth refresh completes.
+      // Writes and counters remain protected by the rules below.
+      allow read: if true;
       allow create: if signedIn()
         && request.resource.data.ownerId == request.auth.uid;
       allow update: if signedIn()
@@ -42,6 +46,12 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'viewCount'
         ])
+        && !resource.data.keys().hasAny(['viewCount'])
+        && request.resource.data.get('viewCount', 0) == 0;
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'viewCount'
+        ])
         && request.resource.data.get('viewCount', 0)
           == resource.data.get('viewCount', 0) + 1
         && !exists(
@@ -50,6 +60,39 @@ service cloud.firestore {
         && getAfter(
           /databases/$(database)/documents/songs/$(songId)/viewers/$(request.auth.uid)
         ).data.userId == request.auth.uid;
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'favoriteCount'
+        ])
+        && !resource.data.keys().hasAny(['favoriteCount'])
+        && request.resource.data.get('favoriteCount', 0) == 0;
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'favoriteCount'
+        ])
+        && request.resource.data.get('favoriteCount', 0) >= 0
+        && (
+          (
+            request.resource.data.get('favoriteCount', 0)
+              == resource.data.get('favoriteCount', 0) + 1
+            && !get(
+              /databases/$(database)/documents/users/$(request.auth.uid)
+            ).data.get('favoriteSongIds', []).hasAny([songId])
+            && getAfter(
+              /databases/$(database)/documents/users/$(request.auth.uid)
+            ).data.get('favoriteSongIds', []).hasAny([songId])
+          )
+          || (
+            request.resource.data.get('favoriteCount', 0)
+              == resource.data.get('favoriteCount', 0) - 1
+            && get(
+              /databases/$(database)/documents/users/$(request.auth.uid)
+            ).data.get('favoriteSongIds', []).hasAny([songId])
+            && !getAfter(
+              /databases/$(database)/documents/users/$(request.auth.uid)
+            ).data.get('favoriteSongIds', []).hasAny([songId])
+          )
+        );
       allow delete: if signedIn()
         && resource.data.ownerId == request.auth.uid;
 
@@ -68,6 +111,14 @@ service cloud.firestore {
           && request.resource.data.songId == songId
           && request.resource.data.content is string
           && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 500
+          && request.resource.data.userName is string
+          && request.resource.data.userName.size() <= 100
+          && request.resource.data.userAvatarUrl is string
+          && request.resource.data.userAvatarUrl.size() <= 2048
+          && request.resource.data.timestampMs is int
+          && request.resource.data.timestampMs >= 0
+          && request.resource.data.createdAt is timestamp
           && request.resource.data.keys().hasOnly([
             'songId',
             'userId',
@@ -77,11 +128,14 @@ service cloud.firestore {
             'timestampMs',
             'createdAt'
           ]);
-        allow update: if signedIn()
+      allow update: if signedIn()
           && resource.data.userId == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'content'
-          ]);
+          ])
+          && request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 500;
         allow delete: if signedIn()
           && resource.data.userId == request.auth.uid;
       }
