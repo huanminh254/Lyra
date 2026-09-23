@@ -23,6 +23,7 @@ import com.devpro.sound.ui.nowplaying.NowPlayingViewModel
 import javax.inject.Inject
 import kotlin.math.hypot
 import androidx.activity.viewModels
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import com.devpro.sound.ui.components.MiniPlayerBinder
 import com.google.firebase.auth.FirebaseAuth
@@ -86,6 +87,28 @@ class MainActivity () : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    val fragmentManager = supportFragmentManager
+                    if (fragmentManager.backStackEntryCount > 0) {
+                        fragmentManager.popBackStack()
+                        return
+                    }
+
+                    val currentFragment = fragmentManager.findFragmentById(R.id.fragment_container)
+                    if (isAuthenticated() && currentFragment !is DiscoverFragment) {
+                        navigateToDiscover()
+                        return
+                    }
+
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        )
+
         radialItems = mutableListOf(
             RadialItem(binding.menuToggle1, NavigationTab.FAVORITES),
             RadialItem(binding.menuToggle2, NavigationTab.DOWNLOADS),
@@ -145,7 +168,10 @@ class MainActivity () : AppCompatActivity() {
         miniPlayer = MiniPlayerBinder(
             root = binding.mainMiniPlayer.root,
             onOpen = {
-                showRoot(NowPlayingFragment())
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, NowPlayingFragment())
+                    .addToBackStack("now_playing")
+                    .commit()
             },
             onPlayPause = viewModel::onPlayPauseClick,
             onFavorite = viewModel::toggleFavorite
@@ -174,7 +200,7 @@ class MainActivity () : AppCompatActivity() {
     }
 
     fun navigateToDiscover() {
-        showRoot(DiscoverFragment())
+        navigateToTab(NavigationTab.DISCOVER)
     }
 
     private fun showRoot(fragment: Fragment): Boolean {
@@ -258,13 +284,26 @@ class MainActivity () : AppCompatActivity() {
         val selectedItem = radialItems.firstOrNull { it.button === selectedButton }
             ?: return
 
-        val previousTab = currentTab
+        navigateToTab(selectedItem.tab)
+    }
 
-        currentTab = selectedItem.tab
-        selectedItem.tab = previousTab
+    private fun navigateToTab(tab: NavigationTab) {
+        if (!isAuthenticated()) {
+            showRoot(LoginFragment())
+            return
+        }
+
+        if (currentTab != tab) {
+            radialItems.firstOrNull { it.tab == tab }?.let { selectedItem ->
+                selectedItem.tab = currentTab
+            }
+            currentTab = tab
+        }
 
         binding.menuToggleMain.setImageResource(currentTab.iconRes)
-        selectedItem.button.setImageResource(selectedItem.tab.iconRes)
+        radialItems.forEach { item ->
+            item.button.setImageResource(item.tab.iconRes)
+        }
         showRoot(fragmentFor(currentTab))
     }
 

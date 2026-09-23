@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.view.GestureDetector
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -19,17 +20,19 @@ import android.util.TypedValue
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.devpro.sound.MainActivity
 import com.devpro.sound.R
 import com.devpro.sound.data.model.Comment
 import com.devpro.sound.databinding.FragmentNowPlayingBinding
+import com.devpro.sound.ui.account.AccountFragment
 import com.devpro.sound.ui.components.loadSongCover
+import coil3.load
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.fragment.app.activityViewModels
 import kotlinx.coroutines.flow.collectLatest
@@ -60,17 +63,8 @@ class NowPlayingFragment : Fragment() {
         lastRenderedPlaying = null
         lastRenderedFavorite = null
 
-        requireActivity().onBackPressedDispatcher.addCallback(
-            viewLifecycleOwner,
-            object : OnBackPressedCallback(true) {
-                override fun handleOnBackPressed() {
-                    (requireActivity() as? MainActivity)?.navigateToDiscover()
-                }
-            }
-        )
-
         binding.nowPlayingBack.setOnClickListener {
-            (requireActivity() as? MainActivity)?.navigateToDiscover()
+            requireActivity().onBackPressedDispatcher.onBackPressed()
         }
         binding.nowPlayingMore.setOnClickListener {
             Toast.makeText(
@@ -86,8 +80,20 @@ class NowPlayingFragment : Fragment() {
         binding.nowPlayingControls.setOnClickListener {
             viewModel.onPlayPauseClick()
         }
-        binding.commentInput.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_SEND || actionId == EditorInfo.IME_ACTION_DONE) {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.nowPlayingRoot) { _, insets ->
+            val keyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            setCommentReactionsVisible(!keyboardVisible)
+            insets
+        }
+        ViewCompat.requestApplyInsets(binding.nowPlayingRoot)
+        binding.commentInput.setOnEditorActionListener { _, actionId, event ->
+            val enterPressed = event?.keyCode == KeyEvent.KEYCODE_ENTER &&
+                event.action == KeyEvent.ACTION_DOWN
+            if (
+                actionId == EditorInfo.IME_ACTION_SEND ||
+                actionId == EditorInfo.IME_ACTION_DONE ||
+                enterPressed
+            ) {
                 submitComment()
                 true
             } else {
@@ -142,6 +148,18 @@ class NowPlayingFragment : Fragment() {
                 state.song?.let { song ->
                     binding.nowPlayingTitle.text = song.title
                     binding.nowPlayingArtist.text = song.artist
+                    binding.nowPlayingArtist.setOnClickListener {
+                        if (song.ownerId.isNotBlank()) {
+                            parentFragmentManager
+                                .beginTransaction()
+                                .replace(
+                                    R.id.fragment_container,
+                                    AccountFragment.newPublicProfile(song.ownerId)
+                                )
+                                .addToBackStack(null)
+                                .commit()
+                        }
+                    }
                     binding.nowPlayingCover.loadSongCover(song.coverUrl)
                     binding.nowPlayingSeek.setWaveform(song.waveform)
                     prepareCoverParallax()
@@ -195,6 +213,12 @@ class NowPlayingFragment : Fragment() {
             binding.nowPlayingCommentCount.text = count.toString()
         }
 
+        viewModel.currentUserAvatarUrl.observe(viewLifecycleOwner) { avatarUrl ->
+            binding.commentAvatar.setImageResource(R.drawable.account)
+            binding.commentAvatar.load(avatarUrl.takeIf { it.isNotBlank() })
+        }
+        viewModel.refreshCurrentUserAvatar()
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.currentComments.collectLatest { comments ->
@@ -209,6 +233,13 @@ class NowPlayingFragment : Fragment() {
         if (content.trim().isEmpty()) return
         viewModel.addComment(content)
         if (reaction == null) binding.commentInput.text?.clear()
+    }
+
+    private fun setCommentReactionsVisible(visible: Boolean) {
+        val visibility = if (visible) View.VISIBLE else View.GONE
+        binding.commentFire.visibility = visibility
+        binding.commentWave.visibility = visibility
+        binding.commentCry.visibility = visibility
     }
 
     private fun renderCurrentComments(comments: List<Comment>) {
