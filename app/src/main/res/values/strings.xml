@@ -47,6 +47,8 @@
     <string name="create_account">Tạo tài khoản</string>
     <string name="register_subtitle">Bắt đầu hành trình âm nhạc của bạn</string>
     <string name="email_or_phone">Email</string>
+    <string name="display_name">Tên hiển thị</string>
+    <string name="name_required">Vui lòng nhập tên hiển thị</string>
     <string name="password">Mật khẩu</string>
     <string name="confirm_password">Xác nhận mật khẩu</string>
     <string name="forgot_password">Quên mật khẩu?</string>
@@ -64,10 +66,8 @@
     <string name="time_format">%1$s / %2$s</string>
     <string name="view_count_format">▷
 %1$d</string>
-    <string name="download_count_format">⇩
-243</string>
-    <string name="favorite_count_format_static">♡
-193</string>
+    <string name="download_count_format">⇩ %1$d</string>
+    <string name="favorite_count_format_static">♡ %1$d</string>
     <string name="feature_in_development">Tính năng đang được phát triển</string>
     <string name="social_login_unavailable">Đăng nhập mạng xã hội chưa được hỗ trợ</string>
     <string name="account_song_meta">%1$d lượt nghe · %2$s</string>
@@ -75,6 +75,13 @@
     <string name="following">Following</string>
     <string name="followers">Followers</string>
     <string name="likes">Likes</string>
+    <string name="follow">Follow</string>
+    <string name="message">Message</string>
+    <string name="add_friend">Thêm bạn</string>
+    <string name="showcase">Showcase</string>
+    <string name="live">LIVE</string>
+    <string name="posted_songs">Bài đã đăng</string>
+    <string name="posted_songs_empty">Người dùng chưa đăng bài hát nào</string>
     <plurals name="favorite_track_count">
         <item quantity="one">%d track</item>
         <item quantity="other">%d tracks</item>

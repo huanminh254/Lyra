@@ -64,6 +64,14 @@ class CommentRemoteDataSource(
     ) {
         val currentUser = firebaseAuth.currentUser
             ?: throw IllegalStateException("Người dùng chưa đăng nhập")
+        val userAvatarUrl = firestore
+            .collection(USERS_COLLECTION)
+            .document(currentUser.uid)
+            .get()
+            .await()
+            .getString(USER_AVATAR_URL_FIELD)
+            .orEmpty()
+            .ifBlank { currentUser.photoUrl?.toString().orEmpty() }
 
         firestore
             .collection(SONGS_COLLECTION)
@@ -75,7 +83,7 @@ class CommentRemoteDataSource(
                     USER_ID_FIELD to currentUser.uid,
                     USER_NAME_FIELD to currentUser.displayName.orEmpty()
                         .ifBlank { currentUser.email.orEmpty() },
-                    USER_AVATAR_URL_FIELD to currentUser.photoUrl?.toString(),
+                    USER_AVATAR_URL_FIELD to userAvatarUrl,
                     CONTENT_FIELD to content,
                     TIMESTAMP_MS_FIELD to timestampMs,
                     CREATED_AT_FIELD to FieldValue.serverTimestamp()
@@ -87,6 +95,7 @@ class CommentRemoteDataSource(
     private companion object {
         const val SONGS_COLLECTION = "songs"
         const val COMMENTS_COLLECTION = "comments"
+        const val USERS_COLLECTION = "users"
         const val SONG_ID_FIELD = "songId"
         const val USER_ID_FIELD = "userId"
         const val USER_NAME_FIELD = "userName"

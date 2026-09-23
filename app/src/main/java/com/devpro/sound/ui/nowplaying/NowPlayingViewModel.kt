@@ -40,6 +40,12 @@ class NowPlayingViewModel @Inject constructor(
     private val _commentCount = MutableLiveData(0)
     val commentCount: LiveData<Int> = _commentCount
 
+    private val _currentUserAvatarUrl = MutableLiveData("")
+    val currentUserAvatarUrl: LiveData<String> = _currentUserAvatarUrl
+
+    private val _playbackProgress = MutableLiveData(0f)
+    val playbackProgress: LiveData<Float> = _playbackProgress
+
     private val _comments = MutableStateFlow<List<Comment>>(emptyList())
     val comments: StateFlow<List<Comment>> = _comments.asStateFlow()
 
@@ -125,7 +131,6 @@ class NowPlayingViewModel @Inject constructor(
                 } else {
                     0
                 }
-                _commentCount.value = 0
                 val restoredProgress = if (shouldRestorePlayback && previousDurationMs > 0L) {
                     (previousPositionMs.toFloat() / previousDurationMs.toFloat()).coerceIn(0f, 1f)
                 } else if (canKeepCurrentPlayback) {
@@ -165,8 +170,6 @@ class NowPlayingViewModel @Inject constructor(
                     observeCommentsForSong(selectedSong?.id)
                 }
             }.onFailure { error ->
-                _likeCount.value = 0
-                _commentCount.value = 0
                 updateState {
                     it.copy(
                         isLoading = false,
@@ -181,6 +184,14 @@ class NowPlayingViewModel @Inject constructor(
 
     fun refreshSongs() {
         loadSongs(preservePlayback = true)
+    }
+
+    fun refreshCurrentUserAvatar() {
+        viewModelScope.launch {
+            _currentUserAvatarUrl.value = runCatching {
+                userRepository.getCurrentUser().avatarUrl
+            }.getOrDefault("")
+        }
     }
 
     fun onPlayPauseClick() {
@@ -205,6 +216,7 @@ class NowPlayingViewModel @Inject constructor(
         val index = playableSongs.indexOfFirst { it.id == song.id }
         if (index == -1) return
         audioPlayer.playAt(index)
+        _playbackProgress.value = 0f
         _likeCount.value = if (_uiState.value?.favoriteSongs?.any { it.id == song.id } == true) {
             1
         } else {
@@ -223,19 +235,30 @@ class NowPlayingViewModel @Inject constructor(
     }
 
     fun toggleFavorite() {
-        val currentSong = _uiState.value?.song ?: return
-        val wasFavorite = _uiState.value?.favoriteSongs
+        val previousState = _uiState.value ?: return
+        val currentSong = previousState.song ?: return
+        val wasFavorite = previousState.favoriteSongs
             ?.any { it.id == currentSong.id } == true
         val previousLikeCount = _likeCount.value ?: 0
+        val previousFavoriteSongs = previousState.favoriteSongs
+        val updatedSong = currentSong
+        val updatedSongs = previousState.songs.map { song ->
+            if (song.id == currentSong.id) updatedSong else song
+        }
         val updatedFavorites = if (wasFavorite) {
-            _uiState.value?.favoriteSongs.orEmpty()
+            previousFavoriteSongs
                 .filterNot { it.id == currentSong.id }
         } else {
-            _uiState.value?.favoriteSongs.orEmpty() + currentSong
+            previousFavoriteSongs + updatedSong
         }
 
         updateState { state ->
-            state.copy(favoriteSongs = updatedFavorites, errorMessage = null)
+            state.copy(
+                song = updatedSong,
+                songs = updatedSongs,
+                favoriteSongs = updatedFavorites,
+                errorMessage = null
+            )
         }
         _likeCount.value = if (wasFavorite) {
             (previousLikeCount - 1).coerceAtLeast(0)
@@ -254,11 +277,11 @@ class NowPlayingViewModel @Inject constructor(
                 _likeCount.value = previousLikeCount
                 updateState { state ->
                     state.copy(
-                        favoriteSongs = if (wasFavorite) {
-                            state.favoriteSongs + currentSong
-                        } else {
-                            state.favoriteSongs.filterNot { it.id == currentSong.id }
+                        song = if (state.song?.id == currentSong.id) currentSong else state.song,
+                        songs = state.songs.map { song ->
+                            if (song.id == currentSong.id) currentSong else song
                         },
+                        favoriteSongs = previousFavoriteSongs,
                         errorMessage = exception.message
                             ?: "Không thể cập nhật yêu thích"
                     )
@@ -273,6 +296,7 @@ class NowPlayingViewModel @Inject constructor(
         val safeProgress = progress.coerceIn(0f, 1f)
         val seekPosition = (duration * safeProgress).toLong()
         audioPlayer.seekTo(seekPosition)
+        _playbackProgress.value = safeProgress
         updateState { it.copy(progress = safeProgress, currentPositionMs = seekPosition) }
         refreshCurrentCommentGroup(seekPosition, force = true)
     }
@@ -346,6 +370,7 @@ class NowPlayingViewModel @Inject constructor(
                         progress = progress
                     )
                 }
+                _playbackProgress.value = progress
                 refreshCurrentCommentGroup(currentPosition)
                 delay(PROGRESS_UPDATE_INTERVAL_MS)
             }

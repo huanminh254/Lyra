@@ -69,6 +69,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:background="#E6000000"
+                android:clickable="true"
+                android:focusable="true"
                 android:paddingStart="14dp"
                 android:paddingTop="4dp"
                 android:paddingEnd="14dp"
@@ -126,7 +128,7 @@
                 android:focusable="true"
                 android:gravity="center"
                 android:orientation="horizontal"
-                app:layout_constraintBottom_toTopOf="@id/now_playing_time"
+                app:layout_constraintBottom_toTopOf="@id/now_playing_comment_overlay"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/now_playing_behind">
@@ -192,7 +194,7 @@
                     android:layout_width="0dp"
                     android:layout_height="132dp"
                     android:layout_marginBottom="8dp"
-                    app:layout_constraintBottom_toTopOf="@id/now_playing_comment_overlay"
+                    app:layout_constraintBottom_toTopOf="@id/now_playing_comment_bar"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent" />
 
@@ -202,7 +204,7 @@
                 android:layout_height="136dp"
                 android:clipChildren="false"
                 android:visibility="gone"
-                app:layout_constraintBottom_toTopOf="@id/now_playing_comment_bar"
+                app:layout_constraintBottom_toTopOf="@id/now_playing_time"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
 
@@ -238,9 +240,10 @@
                     android:background="@android:color/transparent"
                     android:hint="@string/comment_hint"
                     android:imeOptions="actionSend"
-                    android:inputType="textCapSentences|textMultiLine"
+                    android:inputType="textCapSentences"
                     android:maxLines="1"
                     android:padding="0dp"
+                    android:singleLine="true"
                     android:textColor="@color/white"
                     android:textColorHint="@color/muted_text"
                     android:textSize="16sp" />
