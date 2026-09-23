@@ -12,6 +12,8 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.Toast
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -38,7 +40,10 @@ class AccountFragment : Fragment() {
     private val nowPlayingViewModel: NowPlayingViewModel by activityViewModels()
     private lateinit var playlistAdapter: AccountPlaylistAdapter
     private lateinit var likedSongAdapter: AccountSongAdapter
+    private lateinit var publicSongAdapter: AccountPublicSongAdapter
     private var currentAvatarUrl = ""
+    private val requestedProfileId: String?
+        get() = arguments?.getString(ARG_PROFILE_ID)
     private val avatarPicker = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
@@ -64,18 +69,20 @@ class AccountFragment : Fragment() {
         binding.accountRefresh.setOnPullToRefreshListener(viewModel::refresh)
         playlistAdapter = AccountPlaylistAdapter()
         likedSongAdapter = AccountSongAdapter { song ->
-            nowPlayingViewModel.onSongClick(song)
-            parentFragmentManager
-                .beginTransaction()
-                .replace(R.id.fragment_container, NowPlayingFragment())
-                .addToBackStack(null)
-                .commit()
+            openNowPlaying(song)
         }
+        publicSongAdapter = AccountPublicSongAdapter(::openNowPlaying)
 
         binding.accountPlaylists.layoutManager = GridLayoutManager(requireContext(), 2)
         binding.accountPlaylists.adapter = playlistAdapter
         binding.accountLikes.layoutManager = LinearLayoutManager(requireContext())
         binding.accountLikes.adapter = likedSongAdapter
+        binding.accountPublicSongs.layoutManager = LinearLayoutManager(
+            requireContext(),
+            LinearLayoutManager.HORIZONTAL,
+            false
+        )
+        binding.accountPublicSongs.adapter = publicSongAdapter
 
         viewModel.uiState.observe(viewLifecycleOwner) { state ->
             currentAvatarUrl = state.avatarUrl
@@ -84,20 +91,49 @@ class AccountFragment : Fragment() {
             binding.accountAvatar.loadAccountAvatar(state.avatarUrl)
             binding.accountHeaderAvatar.loadAccountAvatar(state.avatarUrl)
             binding.accountEmail.text = state.email.ifBlank {
-                firebaseAuth.currentUser?.email.orEmpty()
+                if (state.isPublicProfile) "@user" else firebaseAuth.currentUser?.email.orEmpty()
             }
             binding.accountFollowingCount.text = state.followingCount.toString()
             binding.accountFollowersCount.text = state.followersCount.toString()
             binding.accountLikesCount.text = state.likedSongs.size.toString()
+            binding.accountBio.text = state.bio
 
-            playlistAdapter.submitList(state.playlists)
-            likedSongAdapter.submitList(state.likedSongs)
-            binding.accountPlaylistsEmpty.visibility = if (state.playlists.isEmpty()) {
+            val publicVisibility = if (state.isPublicProfile) View.VISIBLE else View.GONE
+            val selfVisibility = if (state.isPublicProfile) View.GONE else View.VISIBLE
+            binding.accountPublicActions.visibility = publicVisibility
+            binding.accountBio.visibility = if (state.isPublicProfile && state.bio.isNotBlank()) {
                 View.VISIBLE
             } else {
                 View.GONE
             }
-            binding.accountLikesEmpty.visibility = if (state.likedSongs.isEmpty()) {
+            binding.accountPublicTabs.visibility = publicVisibility
+            binding.accountPublicSongsSection.visibility = publicVisibility
+            binding.accountSelfActions.visibility = selfVisibility
+            binding.accountAvatarAdd.visibility = selfVisibility
+            binding.accountPlaylistsTitle.visibility = selfVisibility
+            binding.accountPlaylists.visibility = selfVisibility
+            binding.accountPlaylistsEmpty.visibility = selfVisibility
+            binding.accountLikesHeader.visibility = selfVisibility
+            binding.accountLikes.visibility = selfVisibility
+            binding.accountLikesEmpty.visibility = selfVisibility
+            binding.accountLogout.visibility = selfVisibility
+
+            playlistAdapter.submitList(state.playlists)
+            likedSongAdapter.submitList(state.likedSongs)
+            publicSongAdapter.submitList(state.uploadedSongs)
+            binding.accountPublicSongsEmpty.visibility = if (
+                state.isPublicProfile && state.uploadedSongs.isEmpty()
+            ) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+            binding.accountPlaylistsEmpty.visibility = if (!state.isPublicProfile && state.playlists.isEmpty()) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+            binding.accountLikesEmpty.visibility = if (!state.isPublicProfile && state.likedSongs.isEmpty()) {
                 View.VISIBLE
             } else {
                 View.GONE
@@ -109,6 +145,7 @@ class AccountFragment : Fragment() {
             }
 
             val firstPlayableSong = state.likedSongs.firstOrNull()
+                ?: state.uploadedSongs.firstOrNull()
                 ?: state.playlists.firstOrNull()?.coverSong
             binding.accountPlay.isEnabled = firstPlayableSong != null
             binding.accountPlay.alpha = if (firstPlayableSong != null) 1f else 0.5f
@@ -127,9 +164,14 @@ class AccountFragment : Fragment() {
             state.avatarErrorMessage?.let { message ->
                 Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
             }
+            state.nameErrorMessage?.let { message ->
+                Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+            }
 
             if (!state.isRefreshing) binding.accountRefresh.finishRefresh()
         }
+
+        viewModel.loadProfile(requestedProfileId)
 
         binding.accountAvatar.setOnClickListener {
             showAvatarPreview()
@@ -139,6 +181,11 @@ class AccountFragment : Fragment() {
         }
         binding.accountAvatarAdd.setOnClickListener {
             avatarPicker.launch("image/*")
+        }
+        binding.accountEdit.setOnClickListener {
+            if (requestedProfileId == null) {
+                showEditNameDialog(viewModel.uiState.value?.displayName.orEmpty())
+            }
         }
         binding.accountBack.setOnClickListener {
             (activity as? MainActivity)?.navigateToDiscover()
@@ -153,6 +200,17 @@ class AccountFragment : Fragment() {
         binding.accountLogout.setOnClickListener {
             firebaseAuth.signOut()
         }
+        binding.accountFollow.setOnClickListener { showFeatureMessage() }
+        binding.accountMessage.setOnClickListener { showFeatureMessage() }
+        binding.accountPublicAdd.setOnClickListener { showFeatureMessage() }
+        binding.accountPublicUploadsTab.setOnClickListener {
+            binding.accountScrollView.post {
+                binding.accountScrollView.smoothScrollTo(
+                    0,
+                    binding.accountPublicSongsSection.top
+                )
+            }
+        }
     }
 
     private fun openNowPlaying(song: Song) {
@@ -162,6 +220,51 @@ class AccountFragment : Fragment() {
             .replace(R.id.fragment_container, NowPlayingFragment())
             .addToBackStack(null)
             .commit()
+    }
+
+    private fun showFeatureMessage() {
+        Toast.makeText(
+            requireContext(),
+            getString(R.string.feature_in_development),
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    private fun showEditNameDialog(currentName: String) {
+        val input = EditText(requireContext()).apply {
+            setSingleLine(true)
+            hint = "Tên hiển thị"
+            setText(currentName)
+            setSelection(text.length)
+            imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_DONE
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        }
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("Chỉnh sửa tên")
+            .setView(input)
+            .setNegativeButton("Hủy", null)
+            .setPositiveButton("Lưu", null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val newName = input.text?.toString()?.trim().orEmpty()
+                if (newName.isBlank()) {
+                    input.error = "Vui lòng nhập tên hiển thị"
+                    return@setOnClickListener
+                }
+                viewModel.updateName(newName)
+                dialog.dismiss()
+            }
+            input.requestFocus()
+            dialog.window?.setSoftInputMode(
+                android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE
+            )
+        }
+
+        dialog.show()
     }
 
     override fun onDestroyView() {
@@ -222,5 +325,17 @@ class AccountFragment : Fragment() {
 
     private fun dp(value: Int): Int {
         return (value * resources.displayMetrics.density).toInt()
+    }
+
+    companion object {
+        private const val ARG_PROFILE_ID = "profile_id"
+
+        fun newPublicProfile(userId: String): AccountFragment {
+            return AccountFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_PROFILE_ID, userId)
+                }
+            }
+        }
     }
 }

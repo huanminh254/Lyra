@@ -11,7 +11,9 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isOwner(userId);
+      // Profiles opened from a song artist need to be readable by signed-in users.
+      // Writes remain restricted to the profile owner below.
+      allow read: if signedIn();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
@@ -23,13 +25,16 @@ service cloud.firestore {
           'cacheSubtitle',
           'appVersion',
           'uploadedSongIds',
-          'favoriteSongIds'
+          'favoriteSongIds',
+          'avatarUrl'
         ]);
       allow delete: if isOwner(userId);
     }
 
     match /songs/{songId} {
-      allow read: if signedIn();
+      // Song metadata is public so Discover can load before auth refresh completes.
+      // Writes and counters remain protected by the rules below.
+      allow read: if true;
       allow create: if signedIn()
         && request.resource.data.ownerId == request.auth.uid;
       allow update: if signedIn()
@@ -42,6 +47,12 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'viewCount'
         ])
+        && !resource.data.keys().hasAny(['viewCount'])
+        && request.resource.data.get('viewCount', 0) == 0;
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'viewCount'
+        ])
         && request.resource.data.get('viewCount', 0)
           == resource.data.get('viewCount', 0) + 1
         && !exists(
@@ -50,6 +61,23 @@ service cloud.firestore {
         && getAfter(
           /databases/$(database)/documents/songs/$(songId)/viewers/$(request.auth.uid)
         ).data.userId == request.auth.uid;
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'favoriteCount'
+        ])
+        && !resource.data.keys().hasAny(['favoriteCount'])
+        && request.resource.data.get('favoriteCount', 0) == 0;
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'favoriteCount'
+        ])
+        && request.resource.data.get('favoriteCount', 0) >= 0
+        && (
+          request.resource.data.get('favoriteCount', 0)
+            == resource.data.get('favoriteCount', 0) + 1
+          || request.resource.data.get('favoriteCount', 0)
+            == resource.data.get('favoriteCount', 0) - 1
+        );
       allow delete: if signedIn()
         && resource.data.ownerId == request.auth.uid;
 

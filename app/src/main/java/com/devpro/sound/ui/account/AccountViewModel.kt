@@ -23,12 +23,21 @@ class AccountViewModel @Inject constructor(
     private val _uiState = MutableLiveData(AccountUiState(isLoading = true))
     val uiState: LiveData<AccountUiState> = _uiState
     private var hasLoaded = false
+    private var loadedProfileId: String? = null
 
-    init {
-        refresh()
+    fun loadProfile(profileId: String?) {
+        val currentUserId = firebaseAuth.currentUser?.uid
+        val normalizedProfileId = profileId
+            ?.takeIf { it.isNotBlank() && it != currentUserId }
+        loadedProfileId = normalizedProfileId
+        load(normalizedProfileId)
     }
 
     fun refresh() {
+        load(loadedProfileId)
+    }
+
+    private fun load(profileId: String?) {
         val isRefreshing = hasLoaded
         _uiState.value = (_uiState.value ?: AccountUiState()).copy(
             isLoading = !isRefreshing,
@@ -38,12 +47,22 @@ class AccountViewModel @Inject constructor(
 
         viewModelScope.launch {
             runCatching {
-                val user = userRepository.getCurrentUser()
+                val user = if (profileId != null) {
+                    userRepository.getUser(profileId)
+                } else {
+                    userRepository.getCurrentUser()
+                }
                 val songs = songRepository.getSongs()
                 user to songs
             }.onSuccess { (user, songs) ->
                 val accountName = user.name
-                    .ifBlank { firebaseAuth.currentUser?.displayName.orEmpty() }
+                    .ifBlank {
+                        if (profileId == null) {
+                            firebaseAuth.currentUser?.displayName.orEmpty()
+                        } else {
+                            "Người dùng"
+                        }
+                    }
                     .ifBlank { firebaseAuth.currentUser?.email?.substringBefore("@").orEmpty() }
                     .ifBlank { "Tài khoản" }
                 val songsById = songs.associateBy(Song::id)
@@ -76,10 +95,19 @@ class AccountViewModel @Inject constructor(
                 }
 
                 _uiState.value = AccountUiState(
+                    isPublicProfile = profileId != null,
                     displayName = accountName,
-                    email = firebaseAuth.currentUser?.email.orEmpty(),
+                    email = if (profileId == null) {
+                        firebaseAuth.currentUser?.email.orEmpty()
+                    } else {
+                        user.accountSubtitle.ifBlank { "@${user.id.take(8)}" }
+                    },
+                    bio = user.bio,
                     avatarUrl = user.avatarUrl,
+                    followersCount = user.followers.size,
+                    followingCount = user.following.size,
                     playlists = playlists,
+                    uploadedSongs = uploadedSongs,
                     likedSongs = likedSongs,
                     isRefreshing = false
                 )
@@ -114,6 +142,41 @@ class AccountViewModel @Inject constructor(
                 _uiState.value = (_uiState.value ?: currentState).copy(
                     isUploadingAvatar = false,
                     avatarErrorMessage = error.message ?: "Không thể cập nhật ảnh đại diện"
+                )
+            }
+        }
+    }
+
+    fun updateName(name: String) {
+        val normalizedName = name.trim()
+        if (normalizedName.isBlank()) {
+            _uiState.value = (_uiState.value ?: AccountUiState()).copy(
+                nameErrorMessage = "Vui lòng nhập tên hiển thị"
+            )
+            return
+        }
+
+        val currentState = _uiState.value ?: AccountUiState()
+        _uiState.value = currentState.copy(
+            displayName = normalizedName,
+            isUpdatingName = true,
+            nameErrorMessage = null
+        )
+
+        viewModelScope.launch {
+            runCatching {
+                userRepository.updateName(normalizedName)
+            }.onSuccess {
+                _uiState.value = (_uiState.value ?: currentState).copy(
+                    displayName = normalizedName,
+                    isUpdatingName = false,
+                    nameErrorMessage = null
+                )
+            }.onFailure { error ->
+                _uiState.value = (_uiState.value ?: currentState).copy(
+                    displayName = currentState.displayName,
+                    isUpdatingName = false,
+                    nameErrorMessage = error.message ?: "Không thể cập nhật tên"
                 )
             }
         }

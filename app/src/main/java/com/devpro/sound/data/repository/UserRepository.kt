@@ -5,8 +5,10 @@ import com.devpro.sound.data.remote.model.UserEntity
 
 interface UserRepository {
     suspend fun getCurrentUser(): UserEntity
+    suspend fun getUser(userId: String): UserEntity
     suspend fun getFavoriteSongIds(): List<String>
     suspend fun addFavoriteSong(songId: String)
     suspend fun removeFavoriteSong(songId: String)
     suspend fun updateAvatar(uri: Uri): String
+    suspend fun updateName(name: String)
 }

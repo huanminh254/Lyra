@@ -10,6 +10,8 @@ class UserRepositoryImpl(
 
     override suspend fun getCurrentUser() = userRemoteDataSource.getCurrentUser()
 
+    override suspend fun getUser(userId: String) = userRemoteDataSource.getUser(userId)
+
     override suspend fun getFavoriteSongIds(): List<String> {
         return userRemoteDataSource.getFavoriteSongIds()
     }
@@ -24,6 +26,10 @@ class UserRepositoryImpl(
 
     override suspend fun updateAvatar(uri: Uri): String {
         return userRemoteDataSource.updateAvatar(uri)
+    }
+
+    override suspend fun updateName(name: String) {
+        userRemoteDataSource.updateName(name)
     }
 
 }

@@ -11,5 +11,8 @@ data class UserEntity(
     val appVersion: String = "",
     val uploadedSongIds: List<String> = emptyList(),
     val favoriteSongIds: List<String> = emptyList(),
-    val avatarUrl: String = ""
+    val avatarUrl: String = "",
+    val bio: String = "",
+    val followers: List<String> = emptyList(),
+    val following: List<String> = emptyList()
 )
