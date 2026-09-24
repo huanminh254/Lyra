@@ -20,13 +20,15 @@ class PullToRefreshLayout @JvmOverloads constructor(
     private var onPullToRefresh: (() -> Unit)? = null
 
     init {
-        setDistanceToTriggerSync(triggerDistance.toInt())
-        setColorSchemeColors(Color.GRAY)
-        setProgressBackgroundColorSchemeColor(Color.TRANSPARENT)
-        setOnChildScrollUpCallback { _, _ -> findScrollableChild(this) }
+        if (!isInEditMode) {
+            setDistanceToTriggerSync(triggerDistance.toInt())
+            setColorSchemeColors(Color.GRAY)
+            setProgressBackgroundColorSchemeColor(Color.TRANSPARENT)
+            setOnChildScrollUpCallback { _, _ -> findScrollableChild(this) }
 
-        super.setOnRefreshListener {
-            onPullToRefresh?.invoke()
+            super.setOnRefreshListener {
+                onPullToRefresh?.invoke()
+            }
         }
     }
 

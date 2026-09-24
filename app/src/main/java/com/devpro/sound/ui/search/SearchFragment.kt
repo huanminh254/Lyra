@@ -66,7 +66,7 @@ class SearchFragment : Fragment() {
     private fun openNowPlaying() {
         parentFragmentManager
             .beginTransaction()
-            .replace(R.id.fragment_container, NowPlayingFragment())
+            .add(R.id.fragment_container, NowPlayingFragment())
             .addToBackStack(null)
             .commit()
     }

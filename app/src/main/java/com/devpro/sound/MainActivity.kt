@@ -6,7 +6,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
-import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.devpro.sound.databinding.ActivityMainBinding
@@ -24,6 +23,7 @@ import com.devpro.sound.ui.nowplaying.NowPlayingViewModel
 import javax.inject.Inject
 import kotlin.math.hypot
 import androidx.activity.viewModels
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import com.devpro.sound.ui.components.MiniPlayerBinder
 import com.google.firebase.auth.FirebaseAuth
@@ -91,17 +91,20 @@ class MainActivity () : AppCompatActivity() {
             this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    if (supportFragmentManager.backStackEntryCount > 0) {
-                        supportFragmentManager.popBackStack()
+                    val fragmentManager = supportFragmentManager
+                    if (fragmentManager.backStackEntryCount > 0) {
+                        fragmentManager.popBackStack()
                         return
                     }
 
-                    val current = supportFragmentManager.findFragmentById(R.id.fragment_container)
-                    if (isAuthenticated() && current !is DiscoverFragment) {
+                    val currentFragment = fragmentManager.findFragmentById(R.id.fragment_container)
+                    if (isAuthenticated() && currentFragment !is DiscoverFragment) {
                         navigateToDiscover()
-                    } else {
-                        finish()
+                        return
                     }
+
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
                 }
             }
         )
@@ -166,7 +169,7 @@ class MainActivity () : AppCompatActivity() {
             root = binding.mainMiniPlayer.root,
             onOpen = {
                 supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, NowPlayingFragment())
+                    .add(R.id.fragment_container, NowPlayingFragment())
                     .addToBackStack("now_playing")
                     .commit()
             },
@@ -197,7 +200,7 @@ class MainActivity () : AppCompatActivity() {
     }
 
     fun navigateToDiscover() {
-        showRoot(DiscoverFragment())
+        navigateToTab(NavigationTab.DISCOVER)
     }
 
     private fun showRoot(fragment: Fragment): Boolean {
@@ -281,13 +284,26 @@ class MainActivity () : AppCompatActivity() {
         val selectedItem = radialItems.firstOrNull { it.button === selectedButton }
             ?: return
 
-        val previousTab = currentTab
+        navigateToTab(selectedItem.tab)
+    }
 
-        currentTab = selectedItem.tab
-        selectedItem.tab = previousTab
+    private fun navigateToTab(tab: NavigationTab) {
+        if (!isAuthenticated()) {
+            showRoot(LoginFragment())
+            return
+        }
+
+        if (currentTab != tab) {
+            radialItems.firstOrNull { it.tab == tab }?.let { selectedItem ->
+                selectedItem.tab = currentTab
+            }
+            currentTab = tab
+        }
 
         binding.menuToggleMain.setImageResource(currentTab.iconRes)
-        selectedItem.button.setImageResource(selectedItem.tab.iconRes)
+        radialItems.forEach { item ->
+            item.button.setImageResource(item.tab.iconRes)
+        }
         showRoot(fragmentFor(currentTab))
     }
 

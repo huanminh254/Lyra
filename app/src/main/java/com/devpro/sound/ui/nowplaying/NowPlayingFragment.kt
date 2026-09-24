@@ -19,6 +19,8 @@ import android.util.TypedValue
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.OvershootInterpolator
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -47,6 +49,7 @@ class NowPlayingFragment : Fragment() {
     private var boundSongId: String? = null
     private var lastRenderedPlaying: Boolean? = null
     private var lastRenderedFavorite: Boolean? = null
+    private var isSwipeSettling = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentNowPlayingBinding.inflate(inflater, container, false)
@@ -117,9 +120,15 @@ class NowPlayingFragment : Fragment() {
             }
         )
 
-        binding.nowPlayingRoot.setOnTouchListener { root, event ->
+        binding.nowPlayingRoot.onSwipeDownStart = {
+            binding.nowPlayingRoot.animate().cancel()
+        }
+        binding.nowPlayingRoot.onSwipeDownChanged = ::applyDismissProgress
+        binding.nowPlayingRoot.onSwipeDownEnd = ::settleDismiss
+        binding.nowPlayingRoot.onSwipeDownCancel = ::animateDismissBack
+        binding.nowPlayingRoot.onOtherTouchEvent = { event ->
             if (event.actionMasked == MotionEvent.ACTION_UP) {
-                root.performClick()
+                binding.nowPlayingRoot.performClick()
             }
             gestureDetector.onTouchEvent(event)
         }
@@ -192,6 +201,53 @@ class NowPlayingFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun applyDismissProgress(offset: Float) {
+        val root = binding.nowPlayingRoot
+        val progress = (offset / root.height.coerceAtLeast(1)).coerceIn(0f, 1f)
+        val scale = 1f - progress * 0.06f
+        root.translationY = offset
+        root.scaleX = scale
+        root.scaleY = scale
+        root.alpha = 1f - progress * 0.14f
+    }
+
+    private fun settleDismiss(velocityY: Float) {
+        val root = binding.nowPlayingRoot
+        val dismissThreshold = root.height * 0.25f
+        val shouldDismiss = root.translationY >= dismissThreshold || velocityY >= 1_400f
+
+        if (shouldDismiss) {
+            isSwipeSettling = true
+            root.animate()
+                .translationY(root.height.toFloat())
+                .scaleX(0.94f)
+                .scaleY(0.94f)
+                .alpha(0f)
+                .setDuration(220L)
+                .setInterpolator(AccelerateInterpolator())
+                .withEndAction {
+                    if (isAdded) {
+                        requireActivity().onBackPressedDispatcher.onBackPressed()
+                    }
+                }
+                .start()
+        } else {
+            animateDismissBack()
+        }
+    }
+
+    private fun animateDismissBack() {
+        binding.nowPlayingRoot.animate()
+            .translationY(0f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .alpha(1f)
+            .setDuration(280L)
+            .setInterpolator(OvershootInterpolator(0.8f))
+            .withEndAction { isSwipeSettling = false }
+            .start()
     }
 
     private fun submitComment(reaction: String? = null) {
@@ -352,6 +408,7 @@ class NowPlayingFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        binding.nowPlayingRoot.animate().cancel()
         commentAnimator?.cancel()
         commentAnimator = null
         boundSongId = null

@@ -84,11 +84,15 @@ class DiscoverFragment : Fragment() {
         binding.discoverList.adapter = featuredSongAdapter
     }
     private fun openFragment(fragment: Fragment){
-        parentFragmentManager
-            .beginTransaction()
-            .replace(R.id.fragment_container, fragment)
-            .addToBackStack(null)
-            .commit()
+        parentFragmentManager.beginTransaction().apply {
+            if (fragment is NowPlayingFragment) {
+                add(R.id.fragment_container, fragment)
+            } else {
+                replace(R.id.fragment_container, fragment)
+            }
+            addToBackStack(null)
+            commit()
+        }
     }
 
     override fun onDestroyView() {

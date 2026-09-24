@@ -34,7 +34,7 @@ class FavoritesFragment : Fragment() {
             viewModel.onSongClick(song)
             parentFragmentManager
                 .beginTransaction()
-                .replace(R.id.fragment_container, NowPlayingFragment())
+                .add(R.id.fragment_container, NowPlayingFragment())
                 .addToBackStack(null)
                 .commit()
         }
