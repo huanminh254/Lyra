@@ -5,9 +5,7 @@ import com.devpro.sound.data.remote.model.SongEntity
 import com.devpro.sound.data.remote.model.UploadSongRequest
 import com.devpro.sound.data.remote.storage.SupabaseStorageClient
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 
 class SongUploadRemoteDataSource(
@@ -24,46 +22,50 @@ class SongUploadRemoteDataSource(
 
         val songReference = firestore.collection(SONGS_COLLECTION).document()
         val songId = songReference.id
-        val audioUrl = supabaseStorageClient.uploadAudio(
-            ownerId = ownerId,
-            songId = songId,
-            uri = request.audioUri
-        )
+        var audioUrl: String? = null
+        var coverUrl: String? = null
 
-        val coverUrl = request.coverUri?.let { coverUri ->
-            supabaseStorageClient.uploadCover(
+        return try {
+            audioUrl = supabaseStorageClient.uploadAudio(
                 ownerId = ownerId,
                 songId = songId,
-                uri = coverUri
+                uri = request.audioUri
             )
-        }.orEmpty()
 
-        val song = SongEntity(
-            id = songId,
-            title = request.title,
-            artist = request.artist,
-            audioUrl = audioUrl,
-            coverUrl = coverUrl,
-            ownerId = ownerId,
-            waveform = waveform.map(Float::toDouble)
-        )
+            coverUrl = request.coverUri?.let { coverUri ->
+                supabaseStorageClient.uploadCover(
+                    ownerId = ownerId,
+                    songId = songId,
+                    uri = coverUri
+                )
+            }
 
-        songReference.set(song).await()
-
-        firestore
-            .collection(USERS_COLLECTION)
-            .document(ownerId)
-            .set(
-                mapOf("uploadedSongIds" to FieldValue.arrayUnion(songId)),
-                SetOptions.merge()
+            val song = SongEntity(
+                id = songId,
+                title = request.title,
+                artist = request.artist,
+                audioUrl = audioUrl.orEmpty(),
+                coverUrl = coverUrl.orEmpty(),
+                ownerId = ownerId,
+                viewCount = 0L,
+                waveform = waveform.map(Float::toDouble)
             )
-            .await()
 
-        return song
+            songReference.set(song).await()
+            song
+        } catch (exception: Exception) {
+            runCatching { songReference.delete().await() }
+            coverUrl?.let { url ->
+                runCatching { supabaseStorageClient.deleteObject(url) }
+            }
+            audioUrl?.let { url ->
+                runCatching { supabaseStorageClient.deleteObject(url) }
+            }
+            throw exception
+        }
     }
 
     private companion object {
         const val SONGS_COLLECTION = "songs"
-        const val USERS_COLLECTION = "users"
     }
 }
