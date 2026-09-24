@@ -9,6 +9,8 @@ interface UserRepository {
     suspend fun getFavoriteSongIds(): List<String>
     suspend fun addFavoriteSong(songId: String)
     suspend fun removeFavoriteSong(songId: String)
+    suspend fun followUser(userId: String)
+    suspend fun unfollowUser(userId: String)
     suspend fun updateAvatar(uri: Uri): String
     suspend fun updateName(name: String)
 }

@@ -104,9 +104,17 @@ class NowPlayingViewModelTest {
     }
 
     private class FakeUserRepository : UserRepository {
+        override suspend fun getCurrentUser(): com.devpro.sound.data.remote.model.UserEntity =
+            com.devpro.sound.data.remote.model.UserEntity()
+        override suspend fun getUser(userId: String): com.devpro.sound.data.remote.model.UserEntity =
+            com.devpro.sound.data.remote.model.UserEntity(id = userId)
         override suspend fun getFavoriteSongIds(): List<String> = emptyList()
         override suspend fun addFavoriteSong(songId: String) = Unit
         override suspend fun removeFavoriteSong(songId: String) = Unit
+        override suspend fun followUser(userId: String) = Unit
+        override suspend fun unfollowUser(userId: String) = Unit
+        override suspend fun updateAvatar(uri: android.net.Uri): String = ""
+        override suspend fun updateName(name: String) = Unit
     }
 
     private class FakeCommentRepository : CommentRepository {

@@ -24,6 +24,14 @@ class UserRepositoryImpl(
         userRemoteDataSource.removeFavoriteSong(songId)
     }
 
+    override suspend fun followUser(userId: String) {
+        userRemoteDataSource.followUser(userId)
+    }
+
+    override suspend fun unfollowUser(userId: String) {
+        userRemoteDataSource.unfollowUser(userId)
+    }
+
     override suspend fun updateAvatar(uri: Uri): String {
         return userRemoteDataSource.updateAvatar(uri)
     }

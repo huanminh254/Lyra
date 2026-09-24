@@ -11,7 +11,9 @@
         android:layout_width="match_parent"
         android:layout_height="156dp"
         android:background="@drawable/song_cover_background"
+        android:clipToOutline="true"
         android:contentDescription="@string/song_cover_description"
+        android:outlineProvider="background"
         android:scaleType="centerCrop"
         android:src="@drawable/ic_launcher_background" />
 

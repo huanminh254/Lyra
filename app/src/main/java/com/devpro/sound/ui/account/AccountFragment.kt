@@ -20,7 +20,6 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.devpro.sound.MainActivity
 import com.devpro.sound.R
 import com.devpro.sound.data.model.Song
 import com.devpro.sound.databinding.FragmentAccountBinding
@@ -67,7 +66,11 @@ class AccountFragment : Fragment() {
 
         binding.accountRefresh.setIndicatorColor(Color.BLACK)
         binding.accountRefresh.setOnPullToRefreshListener(viewModel::refresh)
-        playlistAdapter = AccountPlaylistAdapter()
+        playlistAdapter = AccountPlaylistAdapter { playlist ->
+            if (playlist.id == "likes") {
+                openAllLikes()
+            }
+        }
         likedSongAdapter = AccountSongAdapter { song ->
             openNowPlaying(song)
         }
@@ -75,7 +78,11 @@ class AccountFragment : Fragment() {
 
         binding.accountPlaylists.layoutManager = GridLayoutManager(requireContext(), 2)
         binding.accountPlaylists.adapter = playlistAdapter
-        binding.accountLikes.layoutManager = LinearLayoutManager(requireContext())
+        binding.accountLikes.layoutManager = LinearLayoutManager(
+            requireContext(),
+            LinearLayoutManager.HORIZONTAL,
+            false
+        )
         binding.accountLikes.adapter = likedSongAdapter
         binding.accountPublicSongs.layoutManager = LinearLayoutManager(
             requireContext(),
@@ -97,6 +104,11 @@ class AccountFragment : Fragment() {
             binding.accountFollowersCount.text = state.followersCount.toString()
             binding.accountLikesCount.text = state.likedSongs.size.toString()
             binding.accountBio.text = state.bio
+            binding.accountFollow.text = getString(
+                if (state.isFollowing) R.string.unfollow else R.string.follow
+            )
+            binding.accountFollow.isEnabled = !state.isUpdatingFollow
+            binding.accountFollow.alpha = if (state.isUpdatingFollow) 0.6f else 1f
 
             val publicVisibility = if (state.isPublicProfile) View.VISIBLE else View.GONE
             val selfVisibility = if (state.isPublicProfile) View.GONE else View.VISIBLE
@@ -188,19 +200,24 @@ class AccountFragment : Fragment() {
             }
         }
         binding.accountBack.setOnClickListener {
-            (activity as? MainActivity)?.navigateToDiscover()
+            requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
+        binding.accountFollowingSection.setOnClickListener {
+            openAccountList(AccountListFragment.MODE_FOLLOWING)
+        }
+        binding.accountFollowersSection.setOnClickListener {
+            openAccountList(AccountListFragment.MODE_FOLLOWERS)
+        }
+        binding.accountLikesSection.setOnClickListener {
+            openAccountList(AccountListFragment.MODE_LIKES)
         }
         binding.accountLikesSeeAll.setOnClickListener {
-            parentFragmentManager
-                .beginTransaction()
-                .replace(R.id.fragment_container, FavoritesFragment())
-                .addToBackStack(null)
-                .commit()
+            openAllLikes()
         }
         binding.accountLogout.setOnClickListener {
             firebaseAuth.signOut()
         }
-        binding.accountFollow.setOnClickListener { showFeatureMessage() }
+        binding.accountFollow.setOnClickListener { viewModel.toggleFollow() }
         binding.accountMessage.setOnClickListener { showFeatureMessage() }
         binding.accountPublicAdd.setOnClickListener { showFeatureMessage() }
         binding.accountPublicUploadsTab.setOnClickListener {
@@ -217,7 +234,27 @@ class AccountFragment : Fragment() {
         nowPlayingViewModel.onSongPlayClick(song)
         parentFragmentManager
             .beginTransaction()
-            .replace(R.id.fragment_container, NowPlayingFragment())
+            .add(R.id.fragment_container, NowPlayingFragment())
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun openAccountList(mode: String) {
+        val profileId = requestedProfileId ?: firebaseAuth.currentUser?.uid
+        parentFragmentManager
+            .beginTransaction()
+            .replace(
+                R.id.fragment_container,
+                AccountListFragment.newInstance(profileId, mode)
+            )
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun openAllLikes() {
+        parentFragmentManager
+            .beginTransaction()
+            .replace(R.id.fragment_container, FavoritesFragment())
             .addToBackStack(null)
             .commit()
     }

@@ -8,7 +8,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.devpro.sound.databinding.ItemAccountPlaylistBinding
 import com.devpro.sound.ui.components.loadSongCover
 
-class AccountPlaylistAdapter : ListAdapter<AccountPlaylistUiModel, AccountPlaylistAdapter.ViewHolder>(
+class AccountPlaylistAdapter(
+    private val onPlaylistClick: (AccountPlaylistUiModel) -> Unit
+) : ListAdapter<AccountPlaylistUiModel, AccountPlaylistAdapter.ViewHolder>(
     DIFF_CALLBACK
 ) {
 
@@ -23,16 +25,20 @@ class AccountPlaylistAdapter : ListAdapter<AccountPlaylistUiModel, AccountPlayli
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        holder.bind(getItem(position), onPlaylistClick)
     }
 
     class ViewHolder(
         private val binding: ItemAccountPlaylistBinding
     ) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(playlist: AccountPlaylistUiModel) {
+        fun bind(
+            playlist: AccountPlaylistUiModel,
+            onPlaylistClick: (AccountPlaylistUiModel) -> Unit
+        ) {
             binding.playlistTitle.text = playlist.title
             binding.playlistOwner.text = playlist.ownerName
             binding.playlistCover.loadSongCover(playlist.coverSong?.coverUrl)
+            binding.root.setOnClickListener { onPlaylistClick(playlist) }
         }
     }
 

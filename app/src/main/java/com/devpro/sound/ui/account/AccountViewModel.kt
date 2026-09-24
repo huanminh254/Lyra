@@ -52,9 +52,14 @@ class AccountViewModel @Inject constructor(
                 } else {
                     userRepository.getCurrentUser()
                 }
+                val viewer = if (profileId != null) {
+                    userRepository.getCurrentUser()
+                } else {
+                    user
+                }
                 val songs = songRepository.getSongs()
-                user to songs
-            }.onSuccess { (user, songs) ->
+                Triple(user, viewer, songs)
+            }.onSuccess { (user, viewer, songs) ->
                 val accountName = user.name
                     .ifBlank {
                         if (profileId == null) {
@@ -68,7 +73,7 @@ class AccountViewModel @Inject constructor(
                 val songsById = songs.associateBy(Song::id)
                 val likedSongs = user.favoriteSongIds.mapNotNull(songsById::get)
                 val uploadedSongs = songs.filter { song ->
-                    song.id in user.uploadedSongIds || song.ownerId == user.id
+                    song.ownerId == user.id
                 }
 
                 val playlists = buildList {
@@ -96,6 +101,7 @@ class AccountViewModel @Inject constructor(
 
                 _uiState.value = AccountUiState(
                     isPublicProfile = profileId != null,
+                    isFollowing = profileId != null && user.id in viewer.following,
                     displayName = accountName,
                     email = if (profileId == null) {
                         firebaseAuth.currentUser?.email.orEmpty()
@@ -117,6 +123,40 @@ class AccountViewModel @Inject constructor(
                     isLoading = false,
                     isRefreshing = false,
                     errorMessage = error.message ?: "Không tải được dữ liệu tài khoản"
+                )
+            }
+        }
+    }
+
+    fun toggleFollow() {
+        val profileId = loadedProfileId ?: return
+        val state = _uiState.value ?: return
+        if (state.isUpdatingFollow) return
+
+        val wasFollowing = state.isFollowing
+        _uiState.value = state.copy(
+            isFollowing = !wasFollowing,
+            followersCount = (state.followersCount + if (wasFollowing) -1 else 1)
+                .coerceAtLeast(0),
+            isUpdatingFollow = true,
+            errorMessage = null
+        )
+
+        viewModelScope.launch {
+            runCatching {
+                if (wasFollowing) {
+                    userRepository.unfollowUser(profileId)
+                } else {
+                    userRepository.followUser(profileId)
+                }
+            }.onSuccess {
+                _uiState.value = (_uiState.value ?: state).copy(isUpdatingFollow = false)
+            }.onFailure { error ->
+                _uiState.value = (_uiState.value ?: state).copy(
+                    isFollowing = wasFollowing,
+                    followersCount = state.followersCount,
+                    isUpdatingFollow = false,
+                    errorMessage = error.message ?: "Không thể cập nhật theo dõi"
                 )
             }
         }

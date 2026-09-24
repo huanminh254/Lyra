@@ -42,15 +42,39 @@ class UserRemoteDataSource(
         updateFavoriteSong(songId, add = false)
     }
 
+    suspend fun followUser(userId: String) {
+        updateFollow(userId, follow = true)
+    }
+
+    suspend fun unfollowUser(userId: String) {
+        updateFollow(userId, follow = false)
+    }
+
     suspend fun updateAvatar(uri: Uri): String {
         val userId = requireUserId()
-        val avatarUrl = supabaseStorageClient.uploadAvatar(userId, uri)
-        firestore
+        val userReference = firestore
             .collection(USERS_COLLECTION)
             .document(userId)
-            .set(mapOf("avatarUrl" to avatarUrl), SetOptions.merge())
+        val oldAvatarUrl = userReference
+            .get()
             .await()
-        return avatarUrl
+            .getString("avatarUrl")
+            .orEmpty()
+        val avatarUrl = supabaseStorageClient.uploadAvatar(userId, uri)
+        return try {
+            userReference
+                .set(mapOf("avatarUrl" to avatarUrl), SetOptions.merge())
+                .await()
+
+            if (oldAvatarUrl.isNotBlank() && oldAvatarUrl != avatarUrl) {
+                runCatching { supabaseStorageClient.deleteObject(oldAvatarUrl) }
+            }
+
+            avatarUrl
+        } catch (exception: Exception) {
+            runCatching { supabaseStorageClient.deleteObject(avatarUrl) }
+            throw exception
+        }
     }
 
     suspend fun updateName(name: String) {
@@ -118,6 +142,57 @@ class UserRemoteDataSource(
         }.await()
     }
 
+    private suspend fun updateFollow(targetUserId: String, follow: Boolean) {
+        val currentUserId = requireUserId()
+        require(targetUserId.isNotBlank() && targetUserId != currentUserId) {
+            "Không thể theo dõi tài khoản này"
+        }
+
+        val currentUserReference = firestore
+            .collection(USERS_COLLECTION)
+            .document(currentUserId)
+        val targetUserReference = firestore
+            .collection(USERS_COLLECTION)
+            .document(targetUserId)
+
+        firestore.runTransaction { transaction ->
+            val currentUserSnapshot = transaction.get(currentUserReference)
+            val targetUserSnapshot = transaction.get(targetUserReference)
+            if (!targetUserSnapshot.exists()) {
+                throw IllegalArgumentException("Không tìm thấy người dùng")
+            }
+
+            val followingIds = (currentUserSnapshot.get(FOLLOWING_FIELD) as? List<*>)
+                .orEmpty()
+                .filterIsInstance<String>()
+            val isFollowing = targetUserId in followingIds
+
+            if (follow && !isFollowing) {
+                transaction.set(
+                    currentUserReference,
+                    mapOf(FOLLOWING_FIELD to FieldValue.arrayUnion(targetUserId)),
+                    SetOptions.merge()
+                )
+                transaction.set(
+                    targetUserReference,
+                    mapOf(FOLLOWERS_FIELD to FieldValue.arrayUnion(currentUserId)),
+                    SetOptions.merge()
+                )
+            } else if (!follow && isFollowing) {
+                transaction.set(
+                    currentUserReference,
+                    mapOf(FOLLOWING_FIELD to FieldValue.arrayRemove(targetUserId)),
+                    SetOptions.merge()
+                )
+                transaction.set(
+                    targetUserReference,
+                    mapOf(FOLLOWERS_FIELD to FieldValue.arrayRemove(currentUserId)),
+                    SetOptions.merge()
+                )
+            }
+        }.await()
+    }
+
     private fun requireUserId(): String {
         return firebaseAuth.currentUser?.uid
             ?: throw IllegalStateException("Người dùng chưa đăng nhập")
@@ -128,5 +203,7 @@ class UserRemoteDataSource(
         const val SONGS_COLLECTION = "songs"
         const val FAVORITE_SONG_IDS_FIELD = "favoriteSongIds"
         const val FAVORITE_COUNT_FIELD = "favoriteCount"
+        const val FOLLOWING_FIELD = "following"
+        const val FOLLOWERS_FIELD = "followers"
     }
 }
