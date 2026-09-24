@@ -153,7 +153,7 @@ Dữ liệu người dùng được lưu trong document:
 users/{userId}
 ```
 
-Các danh sách hiện có gồm `favoriteSongIds` và `uploadedSongIds`.
+Danh sách yêu thích hiện có trong user document là `favoriteSongIds`. Các bài đã đăng được truy vấn trực tiếp từ `songs.ownerId`, nên không cần duy trì thêm danh sách ID trong user document.
 
 ## Build và kiểm thử
 

@@ -54,6 +54,48 @@ class SupabaseStorageClient @Inject constructor(
         )
     }
 
+    suspend fun deleteObject(publicUrl: String): Unit = withContext(Dispatchers.IO) {
+        val publicPrefix = "${BuildConfig.SUPABASE_URL.trimEnd('/')}/storage/v1/object/public/"
+        require(publicUrl.startsWith(publicPrefix)) {
+            "URL Supabase không hợp lệ"
+        }
+
+        val encodedObject = publicUrl.removePrefix(publicPrefix)
+        val separatorIndex = encodedObject.indexOf('/')
+        require(separatorIndex > 0 && separatorIndex < encodedObject.lastIndex) {
+            "URL Supabase không có bucket hoặc path"
+        }
+
+        val bucket = Uri.decode(encodedObject.substring(0, separatorIndex))
+        val path = Uri.decode(encodedObject.substring(separatorIndex + 1))
+        val connection = (URL(buildUploadUrl(bucket, path)).openConnection() as HttpURLConnection)
+
+        try {
+            connection.requestMethod = "DELETE"
+            connection.useCaches = false
+            connection.connectTimeout = CONNECT_TIMEOUT_MS
+            connection.readTimeout = READ_TIMEOUT_MS
+            connection.setRequestProperty("apikey", BuildConfig.SUPABASE_ANON_KEY)
+            connection.setRequestProperty(
+                "Authorization",
+                "Bearer ${BuildConfig.SUPABASE_ANON_KEY}"
+            )
+
+            val responseCode = connection.responseCode
+            if (responseCode !in 200..299 && responseCode != HttpURLConnection.HTTP_NOT_FOUND) {
+                val responseBody = (connection.errorStream ?: connection.inputStream)
+                    .bufferedReader()
+                    .use { it.readText() }
+                throw IOException(
+                    "Supabase xoá file thất bại ($responseCode): " +
+                        responseBody.take(MAX_ERROR_LENGTH)
+                )
+            }
+        } finally {
+            connection.disconnect()
+        }
+    }
+
     private suspend fun upload(
         bucket: String,
         path: String,
