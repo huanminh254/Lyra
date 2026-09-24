@@ -12,6 +12,7 @@ interface AudioPlayer {
     fun hasCurrentSong(): Boolean
     fun play(audioUrl: String)
     fun setPlayList(audioUrls: List<String>)
+    fun selectAt(index: Int)
     fun playAt(index: Int)
     fun playNext()
     fun playPrevious()
@@ -51,9 +52,12 @@ class AudioPlayerManager(context: Context) : AudioPlayer {
     }
 
     override fun setPlayList(audioUrls: List<String>) {
+        player.pause()
         player.setMediaItems(audioUrls.map(MediaItem::fromUri))
         player.prepare()
     }
+
+    override fun selectAt(index: Int) = player.seekTo(index, 0L)
 
     override fun playAt(index: Int) {
         player.seekToDefaultPosition(index)

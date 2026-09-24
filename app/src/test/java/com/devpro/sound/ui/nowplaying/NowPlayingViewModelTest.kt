@@ -83,6 +83,7 @@ class NowPlayingViewModelTest {
         return NowPlayingViewModel(
             songRepository = FakeSongRepository(song),
             audioPlayer = FakeAudioPlayer(),
+            playbackStateStore = FakePlaybackStateStore(),
             userRepository = FakeUserRepository(),
             commentRepository = FakeCommentRepository()
         )
@@ -121,6 +122,12 @@ class NowPlayingViewModelTest {
         ) = Unit
     }
 
+    private class FakePlaybackStateStore : com.devpro.sound.data.local.PlaybackStateStore {
+        override fun saveSongId(songId: String) = Unit
+        override fun getSongId(): String? = null
+        override fun clearSongId() = Unit
+    }
+
     private class FakeAudioPlayer : AudioPlayer {
         private var songs = emptyList<String>()
         private var currentIndex = 0
@@ -130,6 +137,7 @@ class NowPlayingViewModelTest {
         override fun hasCurrentSong() = songs.isNotEmpty()
         override fun play(audioUrl: String) { playing = true; listener?.invoke(true) }
         override fun setPlayList(audioUrls: List<String>) { songs = audioUrls; currentIndex = 0 }
+        override fun selectAt(index: Int) { currentIndex = index }
         override fun playAt(index: Int) { currentIndex = index; playing = true; listener?.invoke(true) }
         override fun playNext() { currentIndex++; listener?.invoke(playing) }
         override fun playPrevious() { currentIndex--; listener?.invoke(playing) }

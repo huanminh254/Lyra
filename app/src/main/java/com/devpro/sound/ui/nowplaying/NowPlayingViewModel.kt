@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
+import com.devpro.sound.data.local.PlaybackStateStore
 import com.devpro.sound.data.model.Comment
 import com.devpro.sound.data.model.Song
 import com.devpro.sound.data.repository.CommentRepository
@@ -27,6 +28,7 @@ import javax.inject.Inject
 class NowPlayingViewModel @Inject constructor(
     private val songRepository: SongRepository,
     private val audioPlayer: AudioPlayer,
+    private val playbackStateStore: PlaybackStateStore,
     private val userRepository: UserRepository,
     private val commentRepository: CommentRepository
 ) : ViewModel() {
@@ -77,7 +79,16 @@ class NowPlayingViewModel @Inject constructor(
                     playableSongs.mapNotNull { it.audioUrl }
                 )
 
-                val firstSong = playableSongs.firstOrNull()
+                val savedSongId = playbackStateStore.getSongId()
+                val firstSong = playableSongs.firstOrNull { it.id == savedSongId }
+                    ?: playableSongs.firstOrNull()
+                val firstSongIndex = playableSongs.indexOfFirst { it.id == firstSong?.id }
+                if (firstSongIndex >= 0) {
+                    audioPlayer.selectAt(firstSongIndex)
+                }
+                if (savedSongId != null && firstSong?.id != savedSongId) {
+                    playbackStateStore.clearSongId()
+                }
                 _likeCount.value = if (firstSong != null && firstSong.id in favoriteSongIds) {
                     1
                 } else {
@@ -115,6 +126,7 @@ class NowPlayingViewModel @Inject constructor(
 
     fun onPlayPauseClick() {
         val state = _uiState.value ?: return
+        state.song?.id?.let(playbackStateStore::saveSongId)
 
         if (audioPlayer.hasCurrentSong()) {
             if (audioPlayer.isPlaying()) {
@@ -134,6 +146,7 @@ class NowPlayingViewModel @Inject constructor(
     fun onSongClick(song: Song) {
         val index = playableSongs.indexOfFirst { it.id == song.id }
         if (index == -1) return
+        playbackStateStore.saveSongId(song.id)
         audioPlayer.playAt(index)
         _likeCount.value = if (_uiState.value?.favoriteSongs?.any { it.id == song.id } == true) {
             1
@@ -320,6 +333,7 @@ class NowPlayingViewModel @Inject constructor(
 
     private fun syncCurrentSong() {
         val song = playableSongs.getOrNull(audioPlayer.getCurrentSongIndex()) ?: return
+        playbackStateStore.saveSongId(song.id)
         _likeCount.value = if (_uiState.value?.favoriteSongs?.any { it.id == song.id } == true) {
             1
         } else {

@@ -1,6 +1,8 @@
 package com.devpro.sound.di
 
 import com.devpro.sound.data.audio.AudioWaveformExtractor
+import com.devpro.sound.data.local.PlaybackStateStore
+import com.devpro.sound.data.local.SharedPreferencesPlaybackStateStore
 import com.devpro.sound.data.remote.datasource.SongRemoteDataSource
 import com.devpro.sound.data.repository.SongRepository
 import com.devpro.sound.data.repository.impl.SongRepositoryImpl
@@ -32,6 +34,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+    @Provides
+    @Singleton
+    fun providePlaybackStateStore(
+        @ApplicationContext context: Context
+    ): PlaybackStateStore = SharedPreferencesPlaybackStateStore(context)
+
     @Provides
     @Singleton
     fun provideFirebaseAuth(): FirebaseAuth{
