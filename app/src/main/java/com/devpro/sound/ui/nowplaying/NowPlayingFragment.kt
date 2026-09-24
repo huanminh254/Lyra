@@ -29,6 +29,7 @@ import com.devpro.sound.MainActivity
 import com.devpro.sound.R
 import com.devpro.sound.data.model.Comment
 import com.devpro.sound.databinding.FragmentNowPlayingBinding
+import com.devpro.sound.ui.account.AccountFragment
 import com.devpro.sound.ui.components.loadSongCover
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.fragment.app.activityViewModels
@@ -134,6 +135,18 @@ class NowPlayingFragment : Fragment() {
             state.song?.let { song ->
                 binding.nowPlayingTitle.text = song.title
                 binding.nowPlayingArtist.text = song.artist
+                binding.nowPlayingArtist.setOnClickListener {
+                    if (song.ownerId.isNotBlank()) {
+                        parentFragmentManager
+                            .beginTransaction()
+                            .replace(
+                                R.id.fragment_container,
+                                AccountFragment.newPublicProfile(song.ownerId)
+                            )
+                            .addToBackStack(null)
+                            .commit()
+                    }
+                }
                 binding.nowPlayingCover.loadSongCover(song.coverUrl)
                 prepareCoverParallax()
             }
