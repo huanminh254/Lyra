@@ -46,6 +46,9 @@ class WaveformView @JvmOverloads constructor(
     private var animationStartNanos = 0L
     private var animationDurationNanos = 0L
     private var frameScheduled = false
+    private var seekFrameScheduled = false
+    private var pendingSeekProgress: Float? = null
+    private var lastDispatchedSeekProgress = 0f
     private val frameRunnable = object : Runnable {
         override fun run() {
             frameScheduled = false
@@ -68,6 +71,10 @@ class WaveformView @JvmOverloads constructor(
             }
             postInvalidateOnAnimation()
         }
+    }
+    private val seekFrameRunnable = Runnable {
+        seekFrameScheduled = false
+        dispatchPendingSeek(force = false)
     }
     private var fallbackWaveform: List<Float>? = null
     private var isDragging = false
@@ -167,6 +174,10 @@ class WaveformView @JvmOverloads constructor(
                 isDragging = true
                 removeCallbacks(frameRunnable)
                 frameScheduled = false
+                removeCallbacks(seekFrameRunnable)
+                seekFrameScheduled = false
+                pendingSeekProgress = null
+                lastDispatchedSeekProgress = progress
                 dragStartX = event.x
                 dragStartProgress = progress
                 parent?.requestDisallowInterceptTouchEvent(true)
@@ -180,6 +191,7 @@ class WaveformView @JvmOverloads constructor(
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 if (isDragging) updateProgressFromDrag(event.x)
+                dispatchPendingSeek(force = true)
                 isDragging = false
                 parent?.requestDisallowInterceptTouchEvent(false)
                 performClick()
@@ -204,7 +216,20 @@ class WaveformView @JvmOverloads constructor(
         progress = safeProgress
         renderedProgress = safeProgress
         postInvalidateOnAnimation()
-        onSeek?.invoke(safeProgress)
+        pendingSeekProgress = safeProgress
+        if (!seekFrameScheduled) {
+            seekFrameScheduled = true
+            postOnAnimation(seekFrameRunnable)
+        }
+    }
+
+    private fun dispatchPendingSeek(force: Boolean) {
+        val nextProgress = pendingSeekProgress ?: return
+        if (force || abs(nextProgress - lastDispatchedSeekProgress) >= SEEK_PROGRESS_EPSILON) {
+            lastDispatchedSeekProgress = nextProgress
+            onSeek?.invoke(nextProgress)
+        }
+        pendingSeekProgress = null
     }
 
     private fun scheduleNextFrame() {
@@ -215,7 +240,9 @@ class WaveformView @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         removeCallbacks(frameRunnable)
+        removeCallbacks(seekFrameRunnable)
         frameScheduled = false
+        seekFrameScheduled = false
         super.onDetachedFromWindow()
     }
 
@@ -240,5 +267,6 @@ class WaveformView @JvmOverloads constructor(
         const val MAX_PROGRESS_ANIMATION_MS = 550L
         const val NANOS_PER_MILLISECOND = 1_000_000L
         const val PROGRESS_EPSILON = 0.0001f
+        const val SEEK_PROGRESS_EPSILON = 0.0015f
     }
 }
