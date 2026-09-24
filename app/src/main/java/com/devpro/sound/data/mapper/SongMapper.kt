@@ -18,6 +18,8 @@ fun SongEntity.toSong(id: String = this.id): Song {
         genre = genre,
         year = year,
         viewCount = viewCount,
+        downloadCount = downloadCount,
+        favoriteCount = favoriteCount,
         waveform = waveform.map(Double::toFloat)
     )
 }
@@ -36,6 +38,8 @@ fun Song.toEntity(): SongEntity {
         genre = genre,
         year = year,
         viewCount = viewCount,
+        downloadCount = downloadCount,
+        favoriteCount = favoriteCount,
         waveform = waveform.map(Float::toDouble)
     )
 }

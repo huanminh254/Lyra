@@ -18,5 +18,7 @@ data class SongEntity(
     val genre: String? = null,
     val year: String? = null,
     val viewCount: Long = 0L,
+    val downloadCount: Long = 0L,
+    val favoriteCount: Long = 0L,
     val waveform: List<Double> = emptyList()
 )

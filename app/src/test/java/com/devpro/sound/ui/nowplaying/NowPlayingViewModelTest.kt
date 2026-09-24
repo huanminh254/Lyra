@@ -61,21 +61,21 @@ class NowPlayingViewModelTest {
 
     @Test
     fun toggleFavoriteUpdatesLikeCountLiveData() = runTest {
-        val viewModel = createViewModel()
+        val viewModel = createViewModel(defaultSong().copy(favoriteCount = 10L))
         runCurrent()
 
-        assertEquals(0, viewModel.likeCount.value)
+        assertEquals(10L, viewModel.likeCount.value)
 
         viewModel.toggleFavorite()
         runCurrent()
 
-        assertEquals(1, viewModel.likeCount.value)
+        assertEquals(11L, viewModel.likeCount.value)
         assertTrue(viewModel.uiState.value!!.favoriteSongs.any { it.id == "song-1" })
 
         viewModel.toggleFavorite()
         runCurrent()
 
-        assertEquals(0, viewModel.likeCount.value)
+        assertEquals(10L, viewModel.likeCount.value)
         assertFalse(viewModel.uiState.value!!.favoriteSongs.any { it.id == "song-1" })
     }
 

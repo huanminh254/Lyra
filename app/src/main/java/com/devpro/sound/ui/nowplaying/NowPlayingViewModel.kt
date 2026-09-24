@@ -34,8 +34,8 @@ class NowPlayingViewModel @Inject constructor(
     private val _uiState = MutableLiveData(NowPlayingUiState(isLoading = true))
     val uiState: LiveData<NowPlayingUiState> = _uiState
 
-    private val _likeCount = MutableLiveData(0)
-    val likeCount: LiveData<Int> = _likeCount
+    private val _likeCount = MutableLiveData(0L)
+    val likeCount: LiveData<Long> = _likeCount
 
     private val _commentCount = MutableLiveData(0)
     val commentCount: LiveData<Int> = _commentCount
@@ -78,11 +78,7 @@ class NowPlayingViewModel @Inject constructor(
                 )
 
                 val firstSong = playableSongs.firstOrNull()
-                _likeCount.value = if (firstSong != null && firstSong.id in favoriteSongIds) {
-                    1
-                } else {
-                    0
-                }
+                _likeCount.value = firstSong?.favoriteCount ?: 0L
                 _commentCount.value = 0
 
                 updateState {
@@ -135,11 +131,7 @@ class NowPlayingViewModel @Inject constructor(
         val index = playableSongs.indexOfFirst { it.id == song.id }
         if (index == -1) return
         audioPlayer.playAt(index)
-        _likeCount.value = if (_uiState.value?.favoriteSongs?.any { it.id == song.id } == true) {
-            1
-        } else {
-            0
-        }
+        _likeCount.value = song.favoriteCount
         updateState { it.copy(song = song, isPlaying = audioPlayer.isPlaying()) }
         observeCommentsForSong(song.id)
     }
@@ -153,25 +145,38 @@ class NowPlayingViewModel @Inject constructor(
     }
 
     fun toggleFavorite() {
-        val currentSong = _uiState.value?.song ?: return
-        val wasFavorite = _uiState.value?.favoriteSongs
+        val previousState = _uiState.value ?: return
+        val currentSong = previousState.song ?: return
+        val wasFavorite = previousState.favoriteSongs
             ?.any { it.id == currentSong.id } == true
-        val previousLikeCount = _likeCount.value ?: 0
+        val previousLikeCount = _likeCount.value ?: currentSong.favoriteCount
+        val previousFavoriteSongs = previousState.favoriteSongs
+        val updatedSong = currentSong.copy(
+            favoriteCount = if (wasFavorite) {
+                (currentSong.favoriteCount - 1).coerceAtLeast(0L)
+            } else {
+                currentSong.favoriteCount + 1
+            }
+        )
+        val updatedSongs = previousState.songs.map { song ->
+            if (song.id == currentSong.id) updatedSong else song
+        }
         val updatedFavorites = if (wasFavorite) {
-            _uiState.value?.favoriteSongs.orEmpty()
+            previousFavoriteSongs
                 .filterNot { it.id == currentSong.id }
         } else {
-            _uiState.value?.favoriteSongs.orEmpty() + currentSong
+            previousFavoriteSongs + updatedSong
         }
 
         updateState { state ->
-            state.copy(favoriteSongs = updatedFavorites, errorMessage = null)
+            state.copy(
+                song = if (state.song?.id == updatedSong.id) updatedSong else state.song,
+                songs = updatedSongs,
+                favoriteSongs = updatedFavorites,
+                errorMessage = null
+            )
         }
-        _likeCount.value = if (wasFavorite) {
-            (previousLikeCount - 1).coerceAtLeast(0)
-        } else {
-            previousLikeCount + 1
-        }
+        _likeCount.value = updatedSong.favoriteCount
 
         viewModelScope.launch {
             runCatching {
@@ -320,11 +325,7 @@ class NowPlayingViewModel @Inject constructor(
 
     private fun syncCurrentSong() {
         val song = playableSongs.getOrNull(audioPlayer.getCurrentSongIndex()) ?: return
-        _likeCount.value = if (_uiState.value?.favoriteSongs?.any { it.id == song.id } == true) {
-            1
-        } else {
-            0
-        }
+        _likeCount.value = song.favoriteCount
         updateState { it.copy(song = song, isPlaying = audioPlayer.isPlaying()) }
         observeCommentsForSong(song.id)
     }
